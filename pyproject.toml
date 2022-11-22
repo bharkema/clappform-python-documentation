@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "clappform"
+version = "1.0.0"
+authors= [
+    { name="Clappform B.V.", email="info@clappform.com" },
+]
+description = "Clappform Python API wrapper"
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "requests==2.28.1",
+    "Cerberus==1.3.4",
+]
+
+[project.urls]
+"Documentation" = "https://clappform.readthedocs.io"
+"Source" = "https://github.com/ClappFormOrg/clappform-python"
+
