@@ -13,4 +13,4 @@
 
 Clappform allows you to interact with the Clappform API for a given domain. For many of the resources that the Clappform API provides the simple ``get``, ``create``, ``update`` and ``delete`` methods can be used. Authentication is done transparently, so there is no need to manually authenticate.
 
-## Developer interface is available on [Read The Docs](https://clappform.com)
+## Developer interface is available on [Read The Docs](https://clappform.readthedocs.io)
