@@ -20,7 +20,7 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.0.0"
+__version__ = "2.0.1"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -140,7 +140,7 @@ class Clappform:
             return app.path()
         if isinstance(app, str):
             return dc.App._path.format(app)
-        raise TypeError("app arg is not of type {dc.App} or {str}, got {type(app)}")
+        raise TypeError(f"app arg is not of type {dc.App} or {str}, got {type(app)}")
 
     def get_apps(self) -> list[dc.App]:
         """Gets all apps.
@@ -224,7 +224,7 @@ class Clappform:
         :rtype: clappform.dataclasses.App
         """
         if not isinstance(app, dc.App):
-            raise TypeError("app arg is not of type {dc.App}, got {type(app)}")
+            raise TypeError(f"app arg is not of type {dc.App}, got {type(app)}")
         document = self._private_request("PUT", app.path(), json=asdict(app))
         return dc.App(**document["data"])
 
@@ -252,7 +252,7 @@ class Clappform:
             return collection.path()
         if not isinstance(collection, str):
             raise TypeError(
-                "collection arg is not of type {dc.Collection} or {str}, got {type(collection)}"
+                f"collection arg is not of type {dc.Collection} or {str}, got {type(collection)}"
             )
         app = self._app_path(app).replace("/app/", "")
         return dc.Collection._path.format(app, collection)
@@ -421,7 +421,7 @@ class Clappform:
         if isinstance(query, str):
             return dc.Query._path.format(query)
         raise TypeError(
-            "query arg is not of type {dc.Query} or {str}, got {type(query)}"
+            f"query arg is not of type {dc.Query} or {str}, got {type(query)}"
         )
 
     def get_queries(self) -> list[dc.Query]:
