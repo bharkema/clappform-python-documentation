@@ -189,6 +189,8 @@ class Actionflow:
     id: int
     name: str
     settings: dict
+    cronjobs: list = None
+    tasks: list = None
     _path: str = field(init=False, repr=False, default="/actionflow/{0}")
 
     def path(self) -> str:

@@ -20,7 +20,7 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.0.2"
+__version__ = "2.1.0"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -766,4 +766,98 @@ class Clappform:
             t = type(collection)
             raise TypeError(f"collection arg must be of type {dc.Collection}, got {t}")
         document = self._private_request("DELETE", collection.dataframe_path())
+        return dc.ApiResponse(**document)
+
+    def _actionflow_path(self, actionflow) -> str:
+        if isinstance(actionflow, dc.Actionflow):
+            return actionflow.path()
+        if isinstance(actionflow, int):
+            return dc.Actionflow._path.format(actionflow)
+        t = type(actionflow)
+        raise TypeError(
+            f"actionflow arg is not of type {dc.Actionflow} or {int}, got {t}"
+        )
+
+    def get_actionflows(self) -> list[dc.Actionflow]:
+        """Get all actionflows.
+
+        :returns: List of :class:`clappform.dataclasses.Actionflow` or empty list if
+            there are no actionflows.
+        :rtype: list[clappform.dataclasses.Actionflow]
+        """
+        document = self._private_request("GET", "/actionflows")
+        return [dc.Actionflow(**obj) for obj in document["data"]]
+
+    def get_actionflow(self, actionflow) -> dc.Actionflow:
+        """Get single actionflow.
+
+        :param actionflow: Actionflow to get from the API
+        :type actionflow: :class:`int` | :class:`clappform.dataclasses.App`
+
+        Usage::
+
+            >>> from clappform import Clappform
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
+            >>> af = c.get_actionflow(1)
+            >>> af = c.get_actionflow(af)
+
+        :returns: Actionflow Object
+        :rtype: clappform.dataclasses.Actionflow
+        """
+        path = self._actionflow_path(actionflow)
+        document = self._private_request("GET", path)
+        return dc.Actionflow(**document["data"])
+
+    def create_actionflow(self, name: str, settings: dict) -> dc.Actionflow:
+        """Create a new actionflow.
+
+        :param str name: Display name for the new actionflow.
+        :param dict settings: Settings object
+
+        :returns: New Actionflow object
+        :rtype: clappform.dataclasses.Actionflow
+        """
+        document = self._private_request(
+            "POST",
+            "/actionflow",
+            json={
+                "name": name,
+                "settings": settings,
+            },
+        )
+        return dc.Actionflow(**document["data"])
+
+    def update_actionflow(self, actionflow: dc.Actionflow) -> dc.Actionflow:
+        """Update an existing Actionflow.
+
+        :param actionflow: Actionflow object to update.
+        :type actionflow: clappform.dataclasses.Actionflow
+
+        :returns: Updated Actionflow object
+        :rtype: clappform.dataclasses.Actionflow
+        """
+        if not isinstance(actionflow, dc.Actionflow):
+            raise TypeError(
+                f"actionflow arg is not of type {dc.Actionflow}, got {type(actionflow)}"
+            )
+        document = self._private_request(
+            "PUT", actionflow.path(), json=asdict(actionflow)
+        )
+        return dc.Actionflow(**document["data"])
+
+    def delete_actionflow(self, actionflow) -> dc.ApiResponse:
+        """Delete a Actionflow.
+
+        :param actionflow: Actionflow identifier
+        :type actionflow: :class:`int` | :class:`clappform.dataclasses.Actionflow`
+
+        :returns: API response object
+        :rtype: clappform.dataclasses.ApiResponse
+        """
+        path = self._actionflow_path(actionflow)
+        document = self._private_request("DELETE", path)
         return dc.ApiResponse(**document)

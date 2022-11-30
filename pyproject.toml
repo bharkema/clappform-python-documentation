@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clappform"
-version = "2.0.2"
+version = "2.1.0"
 authors= [
     { name="Clappform B.V.", email="info@clappform.com" },
 ]
@@ -57,4 +57,5 @@ disable = [
     "R0902", # (too-many-instance-attributes)
     "R0913", # (too-many-arguments)
     "R0904", # (too-many-public-methods)
+    "R0903", # (too-few-public-methods)
 ]
