@@ -40,8 +40,8 @@ class Auth:
     """Authentication dataclass.
 
     :param str access_token: Bearer token to be used in a HTTP authorization header.
-    :param int refresh_expiration: Integer representing the when the :attr:`refresh_token` is
-        invalid.
+    :param int refresh_expiration: Integer representing the when the
+        :attr:`refresh_token` is invalid.
     :param str refresh_token: Bearer token to be used get new :attr:`access_token`.
     """
 
@@ -180,3 +180,21 @@ class Query:
         :rtype: str
         """
         return f"/source_query/{self.slug}"
+
+
+@dataclass
+class Actionflow:
+    """Actionflow dataclass."""
+
+    id: int
+    name: str
+    settings: dict
+    _path: str = field(init=False, repr=False, default="/actionflow/{0}")
+
+    def path(self) -> str:
+        """Return the route used to retreive the Actionflow.
+
+        :returns: Actionflow API route
+        :rtype: str
+        """
+        return self._path.format(self.id)

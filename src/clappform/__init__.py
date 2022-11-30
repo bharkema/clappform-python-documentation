@@ -20,23 +20,27 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.0.1"
+__version__ = "2.0.2"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
 __doc__ = "Clappform Python API wrapper"
 
 
+# Access to a protected member _path of a client class (protected-access)
+# pylint: disable=protected-access
 class Clappform:
-    """:class:`Clappform <Clappform>` class is used to more easily interact with an Clappform
-    environement through the API.
+    """:class:`Clappform <Clappform>` class is used to more easily interact with an
+    Clappform environement through the API.
 
-    :param str base_url: Base URL of a Clappform environment e.g. ``https://app.clappform.com``.
+    :param str base_url: Base URL of a Clappform environment e.g.
+        ``https://app.clappform.com``.
     :param str username: Username used in the authentication :meth:`auth <auth>`.
     :param str password: Password used in the authentication :meth:`auth <auth>`.
 
-    Most routes of the Clappform API require authentication. For the routes in the Clappform API
-    that require authentication :class:`Clappform <Clappform>` will do the authentication for you.
+    Most routes of the Clappform API require authentication. For the routes in the
+    Clappform API that require authentication :class:`Clappform <Clappform>` will do
+    the authentication for you.
 
     In the example below ``c.get_apps()`` uses a route which requires authentication.
     :class:`Clappform <Clappform>` does the authentication for you.
@@ -44,13 +48,17 @@ class Clappform:
     Usage::
 
         >>> from clappform import Clappform
-        >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+        >>> c = Clappform(
+        ...     "https://app.clappform.com",
+        ...     "j.doe@clappform.com",
+        ...     "S3cr3tP4ssw0rd!",
+        ... )
         >>> apps = c.get_apps()
         >>> for app in apps:
         ...     print(app.name)
     """
 
-    _auth = None
+    _auth: dc.Auth = None
 
     def __init__(self, base_url: str, username: str, password: str):
         self._base_url: str = f"{base_url}/api"
@@ -105,7 +113,8 @@ class Clappform:
         return self._request(method, path, headers=headers, **kwargs)
 
     def auth(self) -> None:
-        """Sends an authentication request. Gets called whenever authentication is required.
+        """Sends an authentication request. Gets called whenever authentication is
+        required.
 
         The :attr:`_auth` attribute is set to a newly constructed
         :class:`clappform.dataclasses.Auth` object.
@@ -148,10 +157,15 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
             >>> apps = c.get_apps()
 
-        :returns: List of :class:`clappform.dataclasses.App` or empty list if there are no apps.
+        :returns: List of :class:`clappform.dataclasses.App` or empty list if there are
+            no apps.
         :rtype: list[clappform.dataclasses.App]
         """
         document = self._private_request("GET", "/apps")
@@ -166,7 +180,11 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!"
+            ... )
             >>> app = c.get_app("clappform")
             >>> app = c.get_app(app)
 
@@ -188,7 +206,11 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!"
+            ... )
             >>> new_app = c.create_app("foo", "Foo", "Foo Bar", {})
 
         :returns: Newly created app
@@ -215,7 +237,11 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
             >>> app = c.get_app("foo")
             >>> app.name = "Bar"
             >>> app = c.update_app(app)
@@ -237,7 +263,11 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!"
+            ... )
             >>> c.delete_app("foo")
 
         :returns: Response from the API
@@ -251,8 +281,9 @@ class Clappform:
         if isinstance(collection, dc.Collection):
             return collection.path()
         if not isinstance(collection, str):
+            t = type(collection)
             raise TypeError(
-                f"collection arg is not of type {dc.Collection} or {str}, got {type(collection)}"
+                f"collection arg is not of type {dc.Collection} or {str}, got {t}"
             )
         app = self._app_path(app).replace("/app/", "")
         return dc.Collection._path.format(app, collection)
@@ -262,15 +293,21 @@ class Clappform:
 
         The `extended` parameter allows an integer value from 0 - 3.
 
-        :param app: Optional return only collections from specified app, default: ``None``.
+        :param app: Optional return only collections from specified app, default:
+            ``None``.
         :type app: clappform.dataclasses.Collection
-        :param extended: Optional level of detail for each collection, default: ``0``.
+        :param extended: Optional level of detail for each collection, default:
+            ``0``.
         :type extended: int
 
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
             >>> app = c.get_app("foo")
             >>> collections = c.get_collections(extended=3)
             >>> collections = c.get_collections(app=app)
@@ -301,24 +338,30 @@ class Clappform:
         :type app: :class:`str` | :class:`clappform.dataclasses.App`
         :param extended: Optional level of detail for each collection, default: ``0``.
         :type extended: int
-        :param offset: Offset from which to retreive items, only useful when extended is ``3``.
+        :param offset: Offset from which to retreive items, only useful when extended
+            is ``3``.
         :type offset: int
 
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
             >>> app = c.get_app("foo")
             >>> collection = c.get_collection("bar", app=app)
             >>> collection = c.get_collection("bar", app="foo")
             >>> collection = c.get_collection(collection)
 
-        The :class:`TypeError` is only raised when ``collection`` parameter is of type :class:`str`
+        The :class:`TypeError` is only raised when ``collection`` parameter is of type
+            :class:`str`
         and ``app`` parameter is ``None``.
 
         :raises ValueError: extended value not in [0, 1, 2 ,3]
-        :raises TypeError: app kwargs must be of type :class:`clappform.dataclasses.App` or
-            :class:`str`.
+        :raises TypeError: app kwargs must be of type
+           :class:`clappform.dataclasses.App` or :class:`str`.
 
         :returns: Collection Object
         :rtype: clappform.dataclasses.Collection
@@ -327,8 +370,9 @@ class Clappform:
         if extended not in extended_range:
             raise ValueError(f"extended {extended} not in {list(extended_range)}")
         if isinstance(collection, str) and app is None:
+            t = type(collection)
             raise TypeError(
-                f"app kwarg cannot be {type(app)} when collection arg is {type(collection)}"
+                f"app kwarg cannot be {type(app)} when collection arg is {t}"
             )
         path = self._collection_path(app, collection)
         document = self._private_request(
@@ -348,9 +392,18 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
             >>> app = c.get_app("foo")
-            >>> new_collection = c.create_collection(app, "bar", "Bar", "Bar Collection")
+            >>> new_collection = c.create_collection(
+            ...     app,
+            ...     "bar",
+            ...     "Bar",
+            ...     "Bar Collection"
+            ... )
 
         :returns: New Collection Object
         :rtype: clappform.dataclasses.Collection
@@ -377,20 +430,24 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!"
+            ... )
             >>> collection = c.get_collection("bar", app="foo")
-            >>> collection.Name = "Spam & Eggs Collection"
+            >>> collection.name = "Spam & Eggs Collection"
             >>> collection = c.update_collection(collection)
 
-        :riased TypeError: collection arg is not of type :class:`clappform.dataclasses.Collection`
+        :riased TypeError: collection arg is not of type
+            :class:`clappform.dataclasses.Collection`
 
         :returns: Updated Collection object
         :rtype: clappform.dataclasses.Collection
         """
         if not isinstance(collection, dc.Collection):
-            raise TypeError(
-                "collection arg is not of type {dc.Collection}, got {type(collection)}"
-            )
+            t = type(collection)
+            raise TypeError(f"collection arg is not of type {dc.Collection}, got {t}")
         document = self._private_request(
             "PUT", collection.path(), json=asdict(collection)
         )
@@ -405,7 +462,11 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!"
+            ... )
             >>> collection = c.get_collection("bar", app="foo")
             >>> c.delete_collection(collection)
 
@@ -430,7 +491,11 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
             >>> queries = c.get_queries()
 
         :returns: List of Query objects
@@ -450,7 +515,11 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
             >>> query = c.get_query("foo")
 
         :returns: Query object
@@ -480,15 +549,16 @@ class Clappform:
         """Create a new query.
 
         :param str data_source: Source of the data either ``app`` or ``filterbar``.
-        :param list query: Query that follows the specification described in |query_editor|.
+        :param list query: Query that follows the specification described in
+            |query_editor|.
 
          .. |query_editor| raw:: html
 
              <a href="https://clappformorg.github.io/" target="_blank">Query Editor</a>
         :param str name: Name for the query
         :param str slug: Internal identification string
-        :param collection: Only required when the ``data_source`` argument holds the ``"app"``
-            value.
+        :param collection: Only required when the ``data_source`` argument holds the
+            ``"app"`` value.
         :type collection: clappform.dataclasses.Collection
 
         :returns: New Query object
@@ -514,7 +584,11 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!"
+            ... )
             >>> query = c.get_query("foo")
             >>> query.name = "Bar Query"
             >>> query = c.update_query(query)
@@ -609,7 +683,11 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!"
+            ... )
             >>> query = c.get_query("foo")
             >>> it = c.read_dataframe(query)
             >>> for i in it:
@@ -649,10 +727,11 @@ class Clappform:
         :rtype: clappform.dataclasses.ApiResponse
         """
         if not isinstance(collection, dc.Collection):
-            raise TypeError(
-                f"collection arg must be of type {dc.Collection}, got {type(collection)}"
-            )
-        document = self._private_request("POST", collection.dataframe_path(), json=array)
+            t = type(collection)
+            raise TypeError(f"collection arg must be of type {dc.Collection}, got {t}")
+        document = self._private_request(
+            "POST", collection.dataframe_path(), json=array
+        )
         return dc.ApiResponse(**document)
 
     def sync_dataframe(self, collection, array: list[dict]) -> dc.ApiResponse:
@@ -669,9 +748,8 @@ class Clappform:
         :rtype: clappform.dataclasses.ApiResponse
         """
         if not isinstance(collection, dc.Collection):
-            raise TypeError(
-                f"collection arg must be of type {dc.Collection}, got {type(collection)}"
-            )
+            t = type(collection)
+            raise TypeError(f"collection arg must be of type {dc.Collection}, got {t}")
         document = self._private_request("PUT", collection.dataframe_path(), json=array)
         return dc.ApiResponse(**document)
 
@@ -685,8 +763,7 @@ class Clappform:
         :rtype: clappform.dataclasses.ApiResponse
         """
         if not isinstance(collection, dc.Collection):
-            raise TypeError(
-                f"collection arg must be of type {dc.Collection}, got {type(collection)}"
-            )
+            t = type(collection)
+            raise TypeError(f"collection arg must be of type {dc.Collection}, got {t}")
         document = self._private_request("DELETE", collection.dataframe_path())
         return dc.ApiResponse(**document)

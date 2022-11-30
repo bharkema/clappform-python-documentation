@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "clappform"
-version = "2.0.1"
+version = "2.0.2"
 authors= [
     { name="Clappform B.V.", email="info@clappform.com" },
 ]
@@ -26,3 +26,35 @@ dependencies = [
 "Documentation" = "https://clappform.readthedocs.io"
 "Source" = "https://github.com/ClappFormOrg/clappform-python"
 
+[tool.black]
+line-length = 88
+target-version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+
+(
+  /(
+      \.eggs         # exclude a few common directories in the
+    | \.git          # root of the project
+    | \.hg
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+  )/
+  | foo.py           # also separately exclude a file named foo.py in
+                     # the root of the project
+)
+'''
+
+[tool.pylint]
+max-line-length = 88
+disable = [
+    "C0103", # (invalid-name)
+    "R0902", # (too-many-instance-attributes)
+    "R0913", # (too-many-arguments)
+    "R0904", # (too-many-public-methods)
+]

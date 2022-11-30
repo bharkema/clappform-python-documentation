@@ -12,7 +12,9 @@ class HTTPError(requests.exceptions.HTTPError):
     """An HTTP error occurred."""
 
     def __init__(self, *args, **kwargs):
-        """Initialize HTTPError with `code`, `response_id`, `request` and `response` objects."""
+        """Initialize HTTPError with `code`, `response_id`, `request` and `response`
+        objects.
+        """
         #: HTTP status code from JSON body.
         self.code: int = kwargs.pop("code", None)
 
