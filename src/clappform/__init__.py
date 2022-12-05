@@ -20,7 +20,7 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -380,7 +380,9 @@ class Clappform:
         )
         return dc.Collection(**document["data"])
 
-    def create_collection(self, app, slug: str, name: str, desc: str) -> dc.Collection:
+    def create_collection(
+        self, app, slug: str, name: str, desc: str, db: str = "MONGO"
+    ) -> dc.Collection:
         """Create a new Collection.
 
         :param app: App identifier to create collection for.
@@ -388,6 +390,8 @@ class Clappform:
         :param str slug: Name used for internal identification.
         :param str name: Name of the collection.
         :param str desc: Description of what data the collection holds.
+        :param str db: Database where collection is stored. Valid values for ``db`` are
+            ``MONGO`` and ``DATALAKE``, defaults to: ``MONGO``
 
         Usage::
 
@@ -410,6 +414,9 @@ class Clappform:
         """
         path = self._app_path(app)
         path = path.replace("/app/", "/collection/")
+        valid_databases = ("MONGO", "DATALAKE")
+        if db not in valid_databases:
+            raise ValueError(f"db kwarg value is not one of: {valid_databases}")
         document = self._private_request(
             "POST",
             path,
@@ -417,6 +424,7 @@ class Clappform:
                 "slug": slug,
                 "name": name,
                 "description": desc,
+                "database": db,
             },
         )
         return dc.Collection(**document["data"])
