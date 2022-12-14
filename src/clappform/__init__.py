@@ -60,7 +60,7 @@ class Clappform:
 
     _auth: dc.Auth = None
 
-    def __init__(self, base_url: str, username: str, password: str):
+    def __init__(self, base_url: str, username: str, password: str, timeout: int = 2):
         self._base_url: str = f"{base_url}/api"
 
         #: Username to use in the :meth:`auth <auth>`
@@ -69,12 +69,15 @@ class Clappform:
         #: Password to use in the :meth:`auth <auth>`
         self.password: str = password
 
+        #: HTTP request timeout in seconds.
+        self.timeout: int = timeout
+
     def _default_user_agent(self) -> str:
         """Return a string with version of requests and clappform packages."""
         requests_ua = r.utils.default_user_agent()
         return f"clappform/{__version__} {requests_ua}"
 
-    def _request(self, method: str, path: str, timeout=10, **kwargs):
+    def _request(self, method: str, path: str, **kwargs):
         """Implements :class:`requests.request`."""
         headers = kwargs.pop("headers", {})
         headers["User-Agent"] = self._default_user_agent()
@@ -82,7 +85,7 @@ class Clappform:
             method,
             f"{self._base_url}{path}",
             headers=headers,
-            timeout=timeout,
+            timeout=self.timeout,
             **kwargs,
         )
         doc = resp.json()
@@ -447,7 +450,7 @@ class Clappform:
             >>> collection.name = "Spam & Eggs Collection"
             >>> collection = c.update_collection(collection)
 
-        :riased TypeError: collection arg is not of type
+        :raises TypeError: collection arg is not of type
             :class:`clappform.dataclasses.Collection`
 
         :returns: Updated Collection object
