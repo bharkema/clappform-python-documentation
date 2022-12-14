@@ -200,3 +200,25 @@ class Actionflow:
         :rtype: str
         """
         return self._path.format(self.id)
+
+
+@dataclass
+class Questionnaire:
+    """Questionnaire dataclass."""
+
+    name: str
+    id: int
+    created_at: int
+    active: bool
+    created_by: dict
+    latest_version: dict
+    versions: list = None
+    _path: str = field(init=False, repr=False, default="/questionnaire/{0}")
+
+    def path(self) -> str:
+        """Return the route used to retreive the Questionnaire.
+
+        :returns: Questionnaire API route
+        :rtype: str
+        """
+        return self._path.format(self.id)

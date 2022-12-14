@@ -20,7 +20,7 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.1.2"
+__version__ = "2.2.0"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -882,5 +882,112 @@ class Clappform:
         :rtype: clappform.dataclasses.ApiResponse
         """
         path = self._actionflow_path(actionflow)
+        document = self._private_request("DELETE", path)
+        return dc.ApiResponse(**document)
+
+    def _questionnaire_path(self, questionnaire) -> str:
+        if isinstance(questionnaire, dc.Questionnaire):
+            return questionnaire.path()
+        if isinstance(questionnaire, int):
+            return dc.Questionnaire._path.format(questionnaire)
+        t = type(questionnaire)
+        raise TypeError(
+            f"questionnaire arg is not of type {dc.Questionnaire} or {int}, got {t}"
+        )
+
+    def get_questionnaires(self, extended: bool = False) -> list[dc.Questionnaire]:
+        """Get all questionnaires
+
+        :param bool extended: Optional retreive fully expanded questionnaires, defaults
+            to ``false``.
+
+        :returns: List of :class:`clappform.dataclasses.Questionnaire` or empty list if
+            there are no questionnaires.
+        :rtype: list[clappform.dataclasses.Questionnaire]
+        """
+        if not isinstance(extended, bool):
+            raise TypeError(
+                f"extended kwarg mut be of type {bool}, got {type(extended)}"
+            )
+        extended = str(extended).lower()
+        document = self._private_request("GET", f"/questionnaires?extended={extended}")
+        return [dc.Questionnaire(**obj) for obj in document["data"]]
+
+    def get_questionnaire(
+        self, questionnaire, extended: bool = False
+    ) -> dc.Questionnaire:
+        """Get a questionnaire
+
+        :param bool extended: Optional retreive fully expanded questionnaire, defaults
+            to ``false``.
+
+        :returns: Qustionnaire Object
+        :rtype: clappform.dataclasses.Questionnaire
+        """
+        if not isinstance(extended, bool):
+            t = type(extended)
+            raise TypeError(f"extended kwarg mut be of type {bool}, got {t}")
+        extended = str(extended).lower()
+        path = self._questionnaire_path(questionnaire)
+        document = self._private_request("GET", f"{path}?extended={extended}")
+        return dc.Questionnaire(**document["data"])
+
+    def create_questionnaire(self, name: str, settings: dict) -> dc.ApiResponse:
+        """Create a new questionnaire.
+
+        :param str name: Display name for the new questionnaire.
+        :param dict settings: Settings object
+
+        :returns: ApiResponse object
+        :rtype: clappform.dataclasses.ApiResponse
+        """
+        document = self._private_request(
+            "POST",
+            "/questionnaire",
+            json={
+                "name": name,
+                "settings": settings,
+            },
+        )
+        return dc.ApiResponse(**document)
+
+    def update_questionnaire(
+        self, questionnaire: dc.Questionnaire, settings: dict
+    ) -> dc.Questionnaire:
+        """Update an existing Questionnaire.
+
+        :param questionnaire: Questionnaire object to update.
+        :type questionnaire: clappform.dataclasses.Questionnaire
+        :param dict settings: Settings object
+
+        :returns: Updated Questionnaire object
+        :rtype: clappform.dataclasses.Questionnaire
+        """
+        if not isinstance(questionnaire, dc.Questionnaire):
+            t = type(questionnaire)
+            raise TypeError(
+                f"questionnaire arg must be of type {dc.Questionnaire}, got {t}"
+            )
+        document = self._private_request(
+            "PUT",
+            questionnaire.path(),
+            json={
+                "active": questionnaire.active,
+                "settings": settings,
+            },
+        )
+        return dc.Questionnaire(**document["data"])
+
+    def delete_questionnaire(self, questionnaire):
+        """Delete a Questionnaire.
+
+        :param questionnaire: Questionnaire identifier
+        :type questionnaire: :class:`int` |
+            :class:`clappform.dataclasses.Questionnaire`
+
+        :returns: API response object
+        :rtype: clappform.dataclasses.ApiResponse
+        """
+        path = self._questionnaire_path(questionnaire)
         document = self._private_request("DELETE", path)
         return dc.ApiResponse(**document)
