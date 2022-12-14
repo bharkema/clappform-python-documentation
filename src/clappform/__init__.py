@@ -20,7 +20,7 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.1.1"
+__version__ = "2.1.2"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -622,7 +622,7 @@ class Clappform:
         document = self._private_request("DELETE", path)
         return dc.ApiResponse(**document)
 
-    def aggregate_dataframe(self, options: dict, interval_timeout=0.1):
+    def aggregate_dataframe(self, options: dict, interval_timeout: int = 0.1):
         """Aggregate a dataframe
 
         :param dict options: Options for dataframe aggregation.
@@ -679,11 +679,14 @@ class Clappform:
             time.sleep(interval_timeout)  # Prevent Denial Of Service (dos) flagging.
             document = self._private_request(**params)
 
-    def read_dataframe(self, query, limit=100, interval_timeout=0.1):
+    def read_dataframe(self, query, limit: int = 100, interval_timeout: int = 0.1):
         """Read a dataframe.
 
-        :param query: Query to use on collection
-        :type query: clappform.dataclasses.Collection
+        :param query: Query to for retreiving data. When Query is of type
+            :class:`clappform.dataclasses.Collection` everything inside the collection
+            is retreived.
+        :type query: :class:`clappform.dataclasses.Query` |
+            :class:`clappform.dataclasses.Collection`
         :param int limit: Amount of records to retreive per request.
         :param interval_timeout: Time to sleep per request.
         :type interval_timeout: int
@@ -704,14 +707,23 @@ class Clappform:
         :returns: Generator to read dataframe
         :rtype: :class:`generator`
         """
-        if not isinstance(query, dc.Query):
-            raise TypeError(f"query arg mgust be of type {dc.Query}, got {type(query)}")
         path = "/dataframe/read_data"
         params = {
             "method": "POST",
             "path": path,
-            "json": {"query": query.slug, "limit": limit},
+            "json": {"limit": limit},
         }
+        if isinstance(query, dc.Query):
+            params["json"]["query"] = query.slug
+        elif isinstance(query, dc.Collection):
+            params["json"]["app"] = query.app
+            params["json"]["collection"] = query.slug
+        else:
+            t = type(query)
+            raise TypeError(
+                f"query arg must be of type {dc.Query} or {dc.Collection}, got {t}"
+            )
+
         document = self._private_request(**params)
         if "total" not in document or document["total"] == 0:
             return
