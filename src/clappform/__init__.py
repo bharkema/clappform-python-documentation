@@ -20,7 +20,7 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.2.0"
+__version__ = "2.2.1"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -147,6 +147,9 @@ class Clappform:
         document = self._private_request("GET", "/version")
         return dc.Version(**document["data"])
 
+    def _remove_nones(self, original: dict) -> dict:
+        return {k: v for k, v in original.items() if v is not None}
+
     def _app_path(self, app) -> str:
         if isinstance(app, dc.App):
             return app.path()
@@ -254,7 +257,8 @@ class Clappform:
         """
         if not isinstance(app, dc.App):
             raise TypeError(f"app arg is not of type {dc.App}, got {type(app)}")
-        document = self._private_request("PUT", app.path(), json=asdict(app))
+        payload = self._remove_nones(asdict(app))
+        document = self._private_request("PUT", app.path(), json=payload)
         return dc.App(**document["data"])
 
     def delete_app(self, app) -> dc.ApiResponse:
@@ -459,9 +463,8 @@ class Clappform:
         if not isinstance(collection, dc.Collection):
             t = type(collection)
             raise TypeError(f"collection arg is not of type {dc.Collection}, got {t}")
-        document = self._private_request(
-            "PUT", collection.path(), json=asdict(collection)
-        )
+        payload = self._remove_nones(asdict(collection))
+        document = self._private_request("PUT", collection.path(), json=payload)
         return dc.Collection(**document["data"])
 
     def delete_collection(self, collection: dc.Collection) -> dc.ApiResponse:
@@ -609,7 +612,8 @@ class Clappform:
         """
         if not isinstance(query, dc.Query):
             raise TypeError(f"query arg must be of type {dc.Query}, got {type(query)}")
-        document = self._private_request("PUT", query.path(), json=asdict(query))
+        payload = self._remove_nones(asdict(query))
+        document = self._private_request("PUT", query.path(), json=payload)
         return dc.Query(**document["data"])
 
     def delete_query(self, query) -> dc.ApiResponse:
@@ -867,9 +871,8 @@ class Clappform:
             raise TypeError(
                 f"actionflow arg is not of type {dc.Actionflow}, got {type(actionflow)}"
             )
-        document = self._private_request(
-            "PUT", actionflow.path(), json=asdict(actionflow)
-        )
+        payload = self._remove_nones(asdict(actionflow))
+        document = self._private_request("PUT", actionflow.path(), json=payload)
         return dc.Actionflow(**document["data"])
 
     def delete_actionflow(self, actionflow) -> dc.ApiResponse:
@@ -968,13 +971,16 @@ class Clappform:
             raise TypeError(
                 f"questionnaire arg must be of type {dc.Questionnaire}, got {t}"
             )
+        payload = self._remove_nones(
+            {
+                "active": questionnaire.active,
+                "settings": settings,
+            }
+        )
         document = self._private_request(
             "PUT",
             questionnaire.path(),
-            json={
-                "active": questionnaire.active,
-                "settings": settings,
-            },
+            json=payload,
         )
         return dc.Questionnaire(**document["data"])
 
