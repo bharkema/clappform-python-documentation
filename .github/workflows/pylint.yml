@@ -24,5 +24,5 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
-        flake8 . --exclude docs,.svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.nox,.eggs,*.egg --max-complexity=10 --max-line-length=88
+        flake8 . --ignore E203 --exclude docs,.svn,CVS,.bzr,.hg,.git,__pycache__,.tox,.nox,.eggs,*.egg --max-complexity=10 --max-line-length=88
         black --check $(git ls-files '*.py')

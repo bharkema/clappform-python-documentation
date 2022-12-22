@@ -5,22 +5,25 @@ Clappform API Wrapper
 :copyright: (c) 2022 Clappform B.V..
 :license: MIT, see LICENSE for more details.
 """
-__requires__ = ["requests==2.28.1", "Cerberus==1.3.4"]
+__requires__ = ["requests==2.28.1", "Cerberus==1.3.4", "pandas==1.5.2"]
 # Python Standard Library modules
 from dataclasses import asdict
+import tempfile
 import math
 import time
+import json
 
 # PyPi modules
 from cerberus import Validator
 import requests as r
+import pandas as pd
 
 # clappform Package imports.
 from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.2.1"
+__version__ = "2.3.0"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -37,6 +40,7 @@ class Clappform:
         ``https://app.clappform.com``.
     :param str username: Username used in the authentication :meth:`auth <auth>`.
     :param str password: Password used in the authentication :meth:`auth <auth>`.
+    :param int timeout: Optional HTTP request timeout in seconds, defaults to: ``2``.
 
     Most routes of the Clappform API require authentication. For the routes in the
     Clappform API that require authentication :class:`Clappform <Clappform>` will do
@@ -695,7 +699,8 @@ class Clappform:
         :type query: :class:`clappform.dataclasses.Query` |
             :class:`clappform.dataclasses.Collection`
         :param int limit: Amount of records to retreive per request.
-        :param interval_timeout: Time to sleep per request.
+        :param interval_timeout: Optional time to sleep per request, defaults to:
+            ``0.1``.
         :type interval_timeout: int
 
         Usage::
@@ -741,6 +746,35 @@ class Clappform:
             params["path"] = f"{path}?next_page={document['next_page']}"
             time.sleep(interval_timeout)  # Prevent Denial Of Service (dos) flagging.
             document = self._private_request(**params)
+
+    def write_dataframe(
+        self,
+        df: pd.DataFrame,
+        collection: dc.Collection,
+        chunk_size: int = 100,
+        interval_timeout: int = 0.1,
+    ):
+        """Write Pandas DataFrame to collection.
+
+        :param df: Pandas DataFrame to write to collection
+        :type df: :class:`pandas.DataFrame`
+        :param collection: Collection to hold DataFrame records
+        :type collection: :class:`clappform.dataclasses.Collection`
+        :param int chunk_size: defaults to: ``100``
+        :param interval_timeout: Optional time to sleep per request, defaults to:
+            ``0.1``.
+        :type interval_timeout: int
+        """
+        list_df = [df[i : i + chunk_size] for i in range(0, df.shape[0], chunk_size)]
+        for i in range(len(list_df)):
+            # `TemporaryFile` And `force_ascii=False` force the chunck to be `UTF-8`
+            # encoded.
+            with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as fd:
+                df.to_json(fd, orient="records", force_ascii=False)
+                fd.seek(0)  # Reset pointer to begin of file for reading.
+                data = json.loads(fd.read())
+            self.append_dataframe(collection, data)
+            time.sleep(interval_timeout)
 
     def append_dataframe(self, collection, array: list[dict]) -> dc.ApiResponse:
         """Append data to a collection.
