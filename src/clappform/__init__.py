@@ -7,6 +7,7 @@ Clappform API Wrapper
 """
 __requires__ = ["requests==2.28.1", "Cerberus==1.3.4", "pandas==1.5.2"]
 # Python Standard Library modules
+from urllib.parse import urlparse
 from dataclasses import asdict
 import tempfile
 import math
@@ -23,15 +24,13 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.3.0"
+__version__ = "2.4.0"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
 __doc__ = "Clappform Python API wrapper"
 
 
-# Access to a protected member _path of a client class (protected-access)
-# pylint: disable=protected-access
 class Clappform:
     """:class:`Clappform <Clappform>` class is used to more easily interact with an
     Clappform environement through the API.
@@ -154,12 +153,10 @@ class Clappform:
     def _remove_nones(self, original: dict) -> dict:
         return {k: v for k, v in original.items() if v is not None}
 
-    def _app_path(self, app) -> str:
+    def _app_path(self, app, extended: bool = False) -> str:
         if isinstance(app, dc.App):
-            return app.path()
-        if isinstance(app, str):
-            return dc.App._path.format(app)
-        raise TypeError(f"app arg is not of type {dc.App} or {str}, got {type(app)}")
+            return app.path(extended=extended)
+        return dc.App.format_path(app, extended=extended)
 
     def get_apps(self) -> list[dc.App]:
         """Gets all apps.
@@ -181,11 +178,13 @@ class Clappform:
         document = self._private_request("GET", "/apps")
         return [dc.App(**obj) for obj in document["data"]]
 
-    def get_app(self, app) -> dc.App:
+    def get_app(self, app, extended: bool = False) -> dc.App:
         """Get a single app.
 
         :param app: App to get from the API
         :type app: :class:`str` | :class:`clappform.dataclasses.App`
+        :param bool extended: Optional retreive fully expanded app, defaults
+            to ``false``.
 
         Usage::
 
@@ -201,7 +200,7 @@ class Clappform:
         :returns: App Object
         :rtype: clappform.dataclasses.App
         """
-        path = self._app_path(app)
+        path = self._app_path(app, extended)
         document = self._private_request("GET", path)
         return dc.App(**document["data"])
 
@@ -288,18 +287,12 @@ class Clappform:
         document = self._private_request("DELETE", path)
         return dc.ApiResponse(**document)
 
-    def _collection_path(self, app, collection):
+    def _collection_path(self, app, collection, extended: int = 0):
         if isinstance(collection, dc.Collection):
-            return collection.path()
-        if not isinstance(collection, str):
-            t = type(collection)
-            raise TypeError(
-                f"collection arg is not of type {dc.Collection} or {str}, got {t}"
-            )
-        app = self._app_path(app).replace("/app/", "")
-        return dc.Collection._path.format(app, collection)
+            return collection.path(extended=extended)
+        return dc.Collection.format_path(app, collection, extended=extended)
 
-    def get_collections(self, app=None, extended=0) -> list[dc.Collection]:
+    def get_collections(self, app=None, extended: int = 0) -> list[dc.Collection]:
         """Get all the collections.
 
         The `extended` parameter allows an integer value from 0 - 3.
@@ -328,6 +321,7 @@ class Clappform:
         :returns: List of Collections or empty list if there are no collections
         :rtype: list[clappform.dataclasses.Collection]
         """
+        dc.Collection.check_extended(extended)
         document = self._private_request("GET", f"/collections?extended={extended}")
         if isinstance(app, dc.App):
             return [
@@ -377,18 +371,13 @@ class Clappform:
         :returns: Collection Object
         :rtype: clappform.dataclasses.Collection
         """
-        extended_range = range(4)  # API allows for 4 levels of extension.
-        if extended not in extended_range:
-            raise ValueError(f"extended {extended} not in {list(extended_range)}")
         if isinstance(collection, str) and app is None:
             t = type(collection)
             raise TypeError(
                 f"app kwarg cannot be {type(app)} when collection arg is {t}"
             )
-        path = self._collection_path(app, collection)
-        document = self._private_request(
-            "GET", f"{path}?extended={extended}&offset={offset}"
-        )
+        path = self._collection_path(app, collection, extended)
+        document = self._private_request("GET", f"{path}?offset={offset}")
         return dc.Collection(**document["data"])
 
     def create_collection(
@@ -423,8 +412,13 @@ class Clappform:
         :returns: New Collection Object
         :rtype: clappform.dataclasses.Collection
         """
-        path = self._app_path(app)
-        path = path.replace("/app/", "/collection/")
+        if isinstance(app, dc.App):
+            path = app.collection_path()
+        elif isinstance(app, str):
+            path = dc.App.collection_path(app)
+        else:
+            raise TypeError(f"app is not of type {dc.App} or {str}, got {type(app)}")
+
         valid_databases = ("MONGO", "DATALAKE")
         if db not in valid_databases:
             raise ValueError(f"db kwarg value is not one of: {valid_databases}")
@@ -497,11 +491,7 @@ class Clappform:
     def _query_path(self, query) -> str:
         if isinstance(query, dc.Query):
             return query.path()
-        if isinstance(query, str):
-            return dc.Query._path.format(query)
-        raise TypeError(
-            f"query arg is not of type {dc.Query} or {str}, got {type(query)}"
-        )
+        return dc.Query.format_path(query)
 
     def get_queries(self) -> list[dc.Query]:
         """Get all queries.
@@ -832,12 +822,7 @@ class Clappform:
     def _actionflow_path(self, actionflow) -> str:
         if isinstance(actionflow, dc.Actionflow):
             return actionflow.path()
-        if isinstance(actionflow, int):
-            return dc.Actionflow._path.format(actionflow)
-        t = type(actionflow)
-        raise TypeError(
-            f"actionflow arg is not of type {dc.Actionflow} or {int}, got {t}"
-        )
+        return dc.Actionflow.format_path(actionflow)
 
     def get_actionflows(self) -> list[dc.Actionflow]:
         """Get all actionflows.
@@ -922,15 +907,10 @@ class Clappform:
         document = self._private_request("DELETE", path)
         return dc.ApiResponse(**document)
 
-    def _questionnaire_path(self, questionnaire) -> str:
+    def _questionnaire_path(self, questionnaire, extended: bool = False) -> str:
         if isinstance(questionnaire, dc.Questionnaire):
-            return questionnaire.path()
-        if isinstance(questionnaire, int):
-            return dc.Questionnaire._path.format(questionnaire)
-        t = type(questionnaire)
-        raise TypeError(
-            f"questionnaire arg is not of type {dc.Questionnaire} or {int}, got {t}"
-        )
+            return questionnaire.path(extended=extended)
+        return dc.Questionnaire.format_path(questionnaire, extended=extended)
 
     def get_questionnaires(self, extended: bool = False) -> list[dc.Questionnaire]:
         """Get all questionnaires
@@ -943,9 +923,7 @@ class Clappform:
         :rtype: list[clappform.dataclasses.Questionnaire]
         """
         if not isinstance(extended, bool):
-            raise TypeError(
-                f"extended kwarg mut be of type {bool}, got {type(extended)}"
-            )
+            raise TypeError(f"extended is not of type {bool}, got {type(extended)}")
         extended = str(extended).lower()
         document = self._private_request("GET", f"/questionnaires?extended={extended}")
         return [dc.Questionnaire(**obj) for obj in document["data"]]
@@ -961,12 +939,8 @@ class Clappform:
         :returns: Qustionnaire Object
         :rtype: clappform.dataclasses.Questionnaire
         """
-        if not isinstance(extended, bool):
-            t = type(extended)
-            raise TypeError(f"extended kwarg mut be of type {bool}, got {t}")
-        extended = str(extended).lower()
-        path = self._questionnaire_path(questionnaire)
-        document = self._private_request("GET", f"{path}?extended={extended}")
+        path = self._questionnaire_path(questionnaire, extended=extended)
+        document = self._private_request("GET", path)
         return dc.Questionnaire(**document["data"])
 
     def create_questionnaire(self, name: str, settings: dict) -> dc.ApiResponse:
@@ -1030,4 +1004,99 @@ class Clappform:
         """
         path = self._questionnaire_path(questionnaire)
         document = self._private_request("DELETE", path)
+        return dc.ApiResponse(**document)
+
+    def _export_actions_from_groups(self, groups: list[dict]) -> list[dict]:
+        actions = []
+        for group in groups:
+            for page in group["pages"]:
+                for row in page["rows"]:
+                    for module in row["modules"]:
+                        if "actions" not in module["selection"]:
+                            continue
+                        for action in module["selection"]["actions"]:
+                            actions.append(action)
+        return actions
+
+    def export_app(self, app) -> dict:
+        """Export an app.
+
+        :param app: App to export
+        :type app: :class:`str` | :class:`clappform.dataclasses.App`
+
+        :returns: Exported App
+        :rtype: dict
+        """
+        app = self.get_app(app, extended=True)
+        actions = self._export_actions_from_groups(app.groups)
+
+        actionflows = [
+            self.get_actionflow(x["actionflowId"]["id"])
+            for x in filter(
+                lambda x: "type" in x
+                and x["type"] == "actionflow"
+                and "actionflowId" in x
+                and x["actionflowId"] is not None
+                and "id" in x["actionflowId"],
+                actions,
+            )
+        ]
+        questionnaires = [
+            self.get_questionnaire(x["template"]["id"])
+            for x in filter(
+                lambda x: "type" in x
+                and x["type"] == "questionnaire"
+                and "template" in x
+                and x["template"] is not None
+                and "id" in x["template"],
+                actions,
+            )
+        ]
+        import_entries_document = self._private_request("GET", "/import?extended=true")
+        # Non-iterable value `app.collections` is used in an iterating context
+        # (not-an-iterable). `extended=True` In `self.get_app` will change
+        # `dc.App.collections` to a `list`.
+        # pylint: disable=E1133
+        import_entries = list(
+            filter(
+                lambda x: x["collection"] in [x["slug"] for x in app.collections],
+                import_entries_document["data"],
+            )
+        )
+        # pylint: enable=E1133
+        version = self.version()
+        return {
+            "apps": [asdict(app)],
+            "collections": app.collections,
+            "form_templates": [asdict(x) for x in questionnaires],
+            "action_flows": [asdict(x) for x in actionflows],
+            "import_entry": import_entries,
+            "config": {
+                "timestamp": int(time.time()),
+                "created_by": self.username,
+                "enviroment": urlparse(self._base_url).hostname,
+                "api_version": version.api,
+                "web_application_version": version.web_application,
+                "web_server_version": version.web_server,
+                "deployable": True,
+            },
+        }
+
+    def import_app(self, app: dict, data_export: bool = False) -> dc.ApiResponse:
+        """Import an app.
+
+        :param dict app: Exported app object.
+
+        :returns: Api Response Object
+        :rtype: clappform.dataclasses.ApiResponse
+        """
+        config = app.pop("config")
+        if not config["deployable"]:
+            raise Exception("app is not deployable")
+
+        if not isinstance(data_export, bool):
+            t = type(data_export)
+            raise TypeError(f"data_export is not of type {bool}, got {t}")
+        app["delete_mongo_data"] = data_export
+        document = self._private_request("POST", "/transfer/app", json=app)
         return dc.ApiResponse(**document)
