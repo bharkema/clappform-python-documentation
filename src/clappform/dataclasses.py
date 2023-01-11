@@ -5,6 +5,7 @@ clappform.dataclasses
 This module contains the set of Clappform's return objects.
 """
 # Python Standard Library modules
+from urllib.parse import urlparse
 from dataclasses import dataclass
 import base64
 import json
@@ -196,7 +197,7 @@ class Collection(AbstractBase):
         :returns: Collection getting and creating HTTP path
         :rtype: str
         """
-        App.path(app)  # This call checks if app is of type str.
+        App.format_path(app)  # This call checks if app is of type str.
         Collection.check_extended(extended)
         return f"/collection/{app}?extended={extended}"
 
@@ -220,7 +221,7 @@ class Collection(AbstractBase):
         :returns: Collection's HTTP resouce path
         :rtype: str
         """
-        path = Collection.format_base_path(app)  # Checks if `app` is of type `str`.
+        path = urlparse(Collection.format_base_path(app)).path
         if not isinstance(collection, str):
             raise TypeError(f"collection is not of type {str}, got {type(collection)}")
         Collection.check_extended(extended)
