@@ -24,7 +24,7 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.4.1"
+__version__ = "2.4.2"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -415,7 +415,7 @@ class Clappform:
         if isinstance(app, dc.App):
             path = app.collection_path()
         elif isinstance(app, str):
-            path = dc.App.collection_path(app)
+            path = dc.App.format_collection_path(app)
         else:
             raise TypeError(f"app is not of type {dc.App} or {str}, got {type(app)}")
 
