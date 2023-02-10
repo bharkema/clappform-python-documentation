@@ -18,13 +18,14 @@ import json
 from cerberus import Validator
 import requests as r
 import pandas as pd
+import numpy as np
 
 # clappform Package imports.
 from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.4.2"
+__version__ = "2.4.3"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -290,6 +291,8 @@ class Clappform:
     def _collection_path(self, app, collection, extended: int = 0):
         if isinstance(collection, dc.Collection):
             return collection.path(extended=extended)
+        if isinstance(app, dc.App):
+            return dc.Collection.format_path(app.id, collection, extended=extended)
         return dc.Collection.format_path(app, collection, extended=extended)
 
     def get_collections(self, app=None, extended: int = 0) -> list[dc.Collection]:
@@ -712,7 +715,7 @@ class Clappform:
         path = "/dataframe/read_data"
         params = {
             "method": "POST",
-            "path": path,
+            "path": f"{path}?extended=true",
             "json": {"limit": limit},
         }
         if isinstance(query, dc.Query):
@@ -755,6 +758,14 @@ class Clappform:
             ``0.1``.
         :type interval_timeout: int
         """
+        # Transform DataFrame to be JSON serializable
+        for col in df.columns:
+            if df[col].dtype == "datetime64[ns, UTC]":
+                df[col] = df[col].astype("datetime64[s, UTC]").astype("int")
+            df[col] = df[col].replace([np.nan, np.inf, -np.inf], None)
+        df = df.replace([np.nan, np.inf, -np.inf], None)
+
+        # Split DataFrame up into chunks.
         list_df = [df[i : i + chunk_size] for i in range(0, df.shape[0], chunk_size)]
         for i in range(len(list_df)):
             # `TemporaryFile` And `force_ascii=False` force the chunck to be `UTF-8`
@@ -1092,7 +1103,9 @@ class Clappform:
         """
         config = app.pop("config")
         if not config["deployable"]:
+            # pylint: disable=W0719
             raise Exception("app is not deployable")
+        # pylint: enable=W0719
 
         if not isinstance(data_export, bool):
             t = type(data_export)
