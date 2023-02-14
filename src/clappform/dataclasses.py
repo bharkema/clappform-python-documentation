@@ -260,6 +260,8 @@ class Query(AbstractBase):
     slug: str
     source_query: str
     modules: list = None
+    primary: bool = None
+    settings: dict = None
 
     @staticmethod
     def format_path(query: str) -> str:
@@ -360,3 +362,21 @@ class Questionnaire(AbstractBase):
         :rtype: str
         """
         return Questionnaire.format_path(self.id, extended=extended)
+
+
+@dataclass
+class File:
+    """File dataclass."""
+
+    content: bytes
+    filename: str
+    type: str
+    folder_path: list[str]
+
+    def path(self) -> str:
+        """Return the route used to retreive the File.
+
+        :returns: File API route
+        :rtype: str
+        """
+        return f"/file/{self.filename}"

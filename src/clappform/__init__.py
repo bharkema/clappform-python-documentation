@@ -10,6 +10,7 @@ __requires__ = ["requests==2.28.1", "Cerberus==1.3.4", "pandas==1.5.2"]
 from urllib.parse import urlparse
 from dataclasses import asdict
 import tempfile
+import base64
 import math
 import time
 import json
@@ -25,7 +26,7 @@ from . import dataclasses as dc
 from .exceptions import HTTPError
 
 # Metadata
-__version__ = "2.4.3"
+__version__ = "2.5.0"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -1112,4 +1113,120 @@ class Clappform:
             raise TypeError(f"data_export is not of type {bool}, got {t}")
         app["delete_mongo_data"] = data_export
         document = self._private_request("POST", "/transfer/app", json=app)
+        return dc.ApiResponse(**document)
+
+    def get_files(self, folder_path: list[str]) -> dict:
+        """List all files inside a ``folder_path``.
+
+        :param folder_path: List of directory names to search inside of.
+        :type folder_path: list[str]
+
+        :returns: Dictionary object with directories and file names.
+        :rtype: dict
+        """
+        document = self._private_request(
+            "POST", "/files", json={"folder_path": folder_path}
+        )
+        return document["data"]
+
+    def get_file(self, file_name: str, folder_path: list[str]) -> dc.File:
+        """Get a single file inside a ``folder_path``.
+
+        :param file_name: Name of the file to get.
+        :type file_name: str
+        :param folder_path: List of directory names to search inside of.
+        :type folder_path: list[str]
+
+        Usage::
+
+            >>> from clappform import Clappform
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
+            >>> file = c.get_file("todo.txt", ["important", "documents"])
+            >>> with open("/tmp/todo.txt", "wb") as fd:
+            >>>     fd.write(file.content)
+
+        :returns: File object
+        :rtype: clappform.dataclasses.File
+        """
+        folder_path = {"folder_path": folder_path}
+        document = self._private_request("POST", f"/file/{file_name}", json=folder_path)
+        # Transform ``content`` to a byte string.
+        document["data"]["content"] = bytes(
+            document["data"]["content"], encoding="utf-8"
+        )
+        document["data"].update(folder_path)
+        return dc.File(**document["data"])
+
+    def create_file(self, content, file_name: str, folder_path: list[str]) -> dc.File:
+        """Create a new file inside a ``folder_path``.
+
+        :param content: Content to write into new file.
+        :type: str | bytes
+        :param file_name: Name of the file to get.
+        :type file_name: str
+        :param folder_path: List of directory names to search inside of.
+        :type folder_path: list[str]
+
+        :returns: Newly created file.
+        :rtype: clappform.dataclasses.File
+        """
+        if isinstance(content, str):
+            content = bytes(content, encoding="utf-8")
+        if not isinstance(content, bytes):
+            raise TypeError(f"content arg is not of type {bytes}, got {type(content)}")
+        document = self._private_request(
+            "POST",
+            "/file",
+            json={
+                "content": str(base64.b64encode(content), encoding="ascii"),
+                "file_name": file_name,
+                "folder_path": folder_path,
+            },
+        )
+        return dc.File(
+            content=content,
+            filename=document["data"]["file_name"],
+            type=file_name.split(".")[-1],  # Grabs file extension.
+            folder_path=folder_path,
+        )
+
+    def update_file(self, file: dc.File) -> dc.File:
+        """Update a file.
+
+        :param file: File to delete
+        :type file: clappform.dataclasses.File
+
+        :returns: Updated file
+        :rtype: clappform.dataclasses.File
+        """
+        if not isinstance(file, dc.File):
+            raise TypeError(f"file arg is not of type {dc.File}, got {type(file)}")
+        self._private_request(
+            "PUT",
+            file.path(),
+            json={
+                "content": str(base64.b64encode(file.content), encoding="ascii"),
+                "folder_path": file.folder_path,
+            },
+        )
+        return file
+
+    def delete_file(self, file: dc.File) -> dc.ApiResponse:
+        """Delete a file
+
+        :param file: File to delete
+        :type file: clappform.dataclasses.File
+
+        :returns: Api Response object
+        :rtype: clappform.dataclasses.ApiResponse
+        """
+        if not isinstance(file, dc.File):
+            raise TypeError(f"file arg is not of type {dc.File}, got {type(file)}")
+        document = self._private_request(
+            "DELETE", file.path(), json={"folder_path": file.folder_path}
+        )
         return dc.ApiResponse(**document)
