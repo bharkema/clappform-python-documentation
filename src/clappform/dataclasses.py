@@ -92,6 +92,20 @@ class AbstractBase(metaclass=abc.ABCMeta):
     :meth:`path <path>`.
     """
 
+    @staticmethod
+    def bool_to_lower(boolean: bool) -> str:
+        """Return a boolean string in lowercase.
+
+        :param boolean: ``True`` or ``False`` value to convert to lowercase string.
+        :type boolean: bool
+
+        :returns: Lowercase boolean string
+        :rtype: str
+        """
+        if not isinstance(boolean, bool):
+            raise TypeError(f"boolean is not of type {bool}, got {type(boolean)}")
+        return str(boolean).lower()
+
     @abc.abstractmethod
     def path(self) -> str:
         """Return the route used to by the resource.
@@ -132,9 +146,7 @@ class App(AbstractBase):
         """
         if not isinstance(app, str):
             raise TypeError(f"app is not of type {str}, got {type(app)}")
-        if not isinstance(extended, bool):
-            raise TypeError(f"extended is not of type {bool}, got {type(extended)}")
-        extended = str(extended).lower()
+        extended = AbstractBase.bool_to_lower(extended)
         return f"/app/{app}?extended={extended}"
 
     @staticmethod
@@ -227,6 +239,19 @@ class Collection(AbstractBase):
         Collection.check_extended(extended)
         return f"{path}/{collection}?extended={extended}"
 
+    @staticmethod
+    def format_item_path(app: str, collection: str) -> str:
+        """Return the route used for creating and deleting items.
+
+        :param str app: App to which collection belongs to.
+        :param str collection: Collection to get from app.
+
+        :returns: Item HTTP resource path
+        :rtype: str
+        """
+        Collection.format_path(app, collection)  # Does the type checks.
+        return f"/item/{app}/{collection}"
+
     def path(self, extended: int = 0) -> str:
         """Return the route used to retreive the Collection.
 
@@ -236,6 +261,14 @@ class Collection(AbstractBase):
         :rtype: str
         """
         return Collection.format_path(self.app, self.slug, extended)
+
+    def item_path(self) -> str:
+        """Return the route used for creating and deleting items.
+
+        :returns: Item HTTP resource path
+        :rtype: str
+        """
+        return Collection.format_item_path(self.app, self.slug)
 
     def dataframe_path(self) -> str:
         """Return the route used to retreive the Dataframe.
@@ -348,9 +381,7 @@ class Questionnaire(AbstractBase):
         if not isinstance(questionnaire, int):
             t = type(questionnaire)
             raise TypeError(f"questionnaire is not of type {int}, got {t}")
-        if not isinstance(extended, bool):
-            raise TypeError(f"extended is not of type {bool}, got {type(extended)}")
-        extended = str(extended).lower()
+        extended = AbstractBase.bool_to_lower(extended)
         return f"/questionnaire/{questionnaire}?extended={extended}"
 
     def path(self, extended: bool = False) -> str:
@@ -380,3 +411,45 @@ class File:
         :rtype: str
         """
         return f"/file/{self.filename}"
+
+
+@dataclass
+class User(AbstractBase):
+    """User dataclass."""
+
+    email: str
+    extra_information: dict
+    first_name: str
+    last_name: str
+    is_active: bool
+    id: int
+    phone: str
+    messages: dict = None
+    last_online: int = None
+    permissions: list[str] = None
+    roles: list[dict] = None
+
+    @staticmethod
+    def format_path(email: str, extended: bool = False) -> str:
+        """Return the route used to retreive the User.
+
+        :param str email: Email address.
+        :param bool extended: Enable more verbose fields.
+
+        :returns: Email HTTP resource path
+        :rtype: str
+        """
+        if not isinstance(email, str):
+            raise TypeError("email must be of type {str}, got {type(email)}")
+        extended = AbstractBase.bool_to_lower(extended)
+        return f"/user/{email}?extended={extended}"
+
+    def path(self, extended: bool = False) -> str:
+        """Return the route used to retreive the User.
+
+        :param bool extended: Enable more verbose fields.
+
+        :returns: User API route
+        :rtype: str
+        """
+        return User.format_path(self.email, extended=extended)

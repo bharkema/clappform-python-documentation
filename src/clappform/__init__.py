@@ -25,8 +25,9 @@ import numpy as np
 from . import dataclasses as dc
 from .exceptions import HTTPError
 
+
 # Metadata
-__version__ = "2.5.0"
+__version__ = "2.6.0"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -490,6 +491,124 @@ class Clappform:
         :rtype: clappform.dataclasses.Collection
         """
         document = self._private_request("DELETE", collection.path())
+        return dc.ApiResponse(**document)
+
+    def _item_path(self, app, collection):
+        if isinstance(collection, str) and app is None:
+            t = type(collection)
+            raise TypeError(f"app cannot be {type(app)} when collection arg is {t}")
+        if isinstance(collection, dc.Collection):
+            return collection.item_path()
+        if isinstance(app, dc.App):
+            return dc.Collection.format_item_path(app.id, collection)
+        return dc.Collection.format_item_path(app, collection)
+
+    def get_item(self, collection, item_id: str, app=None) -> dict:
+        """Get a single item from a collection.
+
+        :param collection: Identifier for collection to retreive item from.
+        :type collection: :class:`str` | :class:`clappform.dataclasses.Collection`
+        :param item_id: Unique id of the item to retreive.
+        :type item_id: str
+        :param app: Required when collection is of type :class:`str`, default: ``None``.
+        :type app: :class:`str` | :class:`clappform.dataclasses.App`
+
+        :returns: Item dictionary
+        :rtype: dict
+        """
+        path = self._item_path(app, collection)
+        if not isinstance(item_id, str):
+            raise TypeError(f"item_id arg must be of type {str}, got {type(item_id)}")
+        document = self._private_request("GET", f"{path}/{item_id}")
+        document["data"]["_id"] = item_id
+        return document["data"]
+
+    def create_item(self, collection, item: dict, app=None) -> dict:
+        """Create a new item to store persistently.
+
+        :param collection: Identifier for collection to store item to.
+        :type collection: :class:`str` | :class:`clappform.dataclasses.Collection`
+        :param item: Dictionary to store persistently.
+        :type item: dict
+        :param app: Required when collection is of type :class:`str`, default: ``None``.
+        :type app: :class:`str` | :class:`clappform.dataclasses.App`
+
+        :returns: Newly created item
+        :rtype: dict
+        """
+        path = self._item_path(app, collection)
+        if not isinstance(item, dict):
+            raise TypeError(f"item arg is not of type {dict}, got {type(item)}")
+        document = self._private_request("POST", path, json={"data": item})
+        return document["data"]
+
+    def update_item(self, collection, item: dict, app=None) -> dict:
+        """Update an existing item.
+
+        :param collection: Identifier for collection to store item to.
+        :type collection: :class:`str` | :class:`clappform.dataclasses.Collection`
+        :param item: Item dictionary with ``"_id": "str"`` key value pair.
+        :type item: dict
+        :param app: Required when collection is of type :class:`str`, default: ``None``.
+        :type app: :class:`str` | :class:`clappform.dataclasses.App`
+
+        :returns: Updated item dictionary
+        :rtype: dict
+        """
+        if not isinstance(item, dict):
+            raise TypeError(f"item arg is not of type {dict}, got {type(item)}")
+        try:
+            item_id = item.pop("_id")  # `_id` is MongoDB generated unique id
+        except KeyError as e:
+            raise KeyError("could not find '_id' in item") from e
+        if not isinstance(item_id, str):
+            raise TypeError(
+                f"value of item['_id'] is not of type {str}, got {type(item_id)}"
+            )
+        path = self._item_path(app, collection)
+        document = self._private_request(
+            "PUT", f"{path}/{item_id}", json={"data": item}
+        )
+        document["data"]["_id"] = item_id
+        return document["data"]
+
+    def delete_item(self, collection, item, app=None):
+        """Delete single item or list of items.
+
+        :param collection: Identifier for collection to store item to.
+        :type collection: :class:`str` | :class:`clappform.dataclasses.Collection`
+        :param item: Dictionary with ``"_id": "str"`` key value pair or list with
+            dictionaries.
+        :type item: :class:`dict` | :class:``list``
+        :param app: Required when collection is of type :class:`str`, default: ``None``.
+        :type app: :class:`str` | :class:`clappform.dataclasses.App`
+
+        :returns: API reponse object
+        :rtype: clappform.dataclasses.Collection
+        """
+        oids = []
+        if isinstance(item, dict):
+            try:
+                item_id = item.pop("_id")  # `_id` is MongoDB generated unique id
+            except KeyError as e:
+                raise KeyError("could not find '_id' in item") from e
+            if not isinstance(item_id, str):
+                raise TypeError(
+                    f"value of item['_id'] is not of type {str}, got {type(item_id)}"
+                )
+            oids.append(item_id)
+        elif isinstance(item, list):
+            for i in item:
+                if not isinstance(i, str):
+                    i, t = item.index(i), type(i)
+                    raise TypeError(
+                        f"value of item at index {i} is not of type {str}, got {t}"
+                    )
+                oids.append(i)
+        else:
+            raise TypeError(f"item is not of type dict or list[str], got {type(item)}")
+        path = self._item_path(app, collection)
+        document = self._private_request("DELETE", path, json={"oids": oids})
         return dc.ApiResponse(**document)
 
     def _query_path(self, query) -> str:
@@ -1230,3 +1349,119 @@ class Clappform:
             "DELETE", file.path(), json={"folder_path": file.folder_path}
         )
         return dc.ApiResponse(**document)
+
+    def _user_path(self, user, extended: bool = False) -> str:
+        return (
+            user.path(extended=extended)
+            if isinstance(user, dc.User)
+            else dc.User.format_path(user, extended=extended)
+        )
+
+    def get_users(self, extended: bool = True) -> list[dc.User]:
+        """Get a :class:`list` of :class:`clappform.dataclasses.User`.
+
+        :param bool extended: Optional retreive fully expanded users, defaults
+            to ``false``.
+
+        :returns: :class:`list` of :class:`clappform.dataclasses.User`.
+        :rtype: list[clappform.dataclasses.User]
+        """
+        extended = dc.AbstractBase.bool_to_lower(extended)
+        document = self._private_request("GET", f"/users?extended={extended}")
+        return [dc.User(**obj) for obj in document["data"]]
+
+    def get_user(self, user, extended: bool = False) -> dc.User:
+        """Get a :class:`list` of :class:`clappform.dataclasses.User`.
+
+        :param user: User Email (:class:`str`) or :class:`clappform.dataclasses.User`
+            object.
+        :type user: :class:`str` | :class:`clappform.dataclasses.User`
+        :param bool extended: Optional retreive fully expanded user, defaults
+            to ``false``.
+
+        :returns: User object.
+        :rtype: clappform.dataclasses.User
+        """
+        path = self._user_path(user, extended=extended)
+        document = self._private_request("GET", path)
+        return dc.User(**document["data"])
+
+    def create_user(
+        self,
+        email: str,
+        first_name: str,
+        last_name: str,
+        password: str,
+        phone: str = None,
+        extra_information: dict = None,
+        roles: list = None,
+    ) -> dc.User:
+        """Create a new user.
+
+        :param str email: Email address of new user.
+        :param str first_name: First name of the new user.
+        :param str last_name: Last name of the new user.
+        :param str password: Password to use at login.
+        :param str phone: Optional phone number of the new user.
+        :param dict extra_information: Extra information associated with the new user.
+        :param list roles: Roles to be assigned to the new user.
+
+        :returns: Newly created User object.
+        :rtype: clappform.dataclasses.User
+        """
+        payload = self._remove_nones(
+            {
+                "email": email,
+                "first_name": first_name,
+                "last_name": last_name,
+                "password": password,
+                "phone": phone,
+                "extra_information": extra_information,
+                "roles": roles,
+            }
+        )
+        document = self._private_request("POST", "/user", json=payload)
+        return dc.User(**document["data"])
+
+    def update_user(self, user: dc.User) -> dc.User:
+        """Update a user.
+
+        :param user: User object to update
+        :type user: clappform.dataclasses.User
+
+        :returns: Updated user object
+        :rtype: clappform.dataclasses.User
+        """
+        if not isinstance(user, dc.User):
+            raise TypeError(f"user must be of type {dc.User}, got {type(user)}")
+        payload = self._remove_nones(asdict(user))
+        del payload["email"]
+        document = self._private_request("PUT", user.path(), json=payload)
+        return dc.User(**document["data"])
+
+    def delete_user(self, user) -> dc.User:
+        """Get :class:`clappform.dataclasses.User` object of the current user.
+
+        :param user: User to delete.
+        :type user: clappform.dataclasses.User
+
+        :returns: User object set to inactive.
+        :rtype: clappform.dataclasses.User
+        """
+        if not isinstance(user, dc.User):
+            raise TypeError(f"user must be of type {dc.User}, got {type(user)}")
+        document = self._private_request("DELETE", user.path())
+        return dc.User(**document["data"])
+
+    def current_user(self, extended: bool = False) -> dc.User:
+        """Get :class:`clappform.dataclasses.User` object of the current user.
+
+        :param bool extended: Optional retreive fully expanded user, defaults
+            to ``false``.
+
+        :returns: User object.
+        :rtype: clappform.dataclasses.User
+        """
+        extended = dc.AbstractBase.bool_to_lower(extended)
+        document = self._private_request("GET", f"/user/me?extended={extended}")
+        return dc.User(**document["data"])
