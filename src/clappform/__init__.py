@@ -31,7 +31,7 @@ from .exceptions import (
 
 
 # Metadata
-__version__ = "3.0.0-alpha.1"
+__version__ = "3.0.0-alpha.2"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
