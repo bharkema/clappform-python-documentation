@@ -1,5 +1,6 @@
 """Clappform documentation build configuration file."""
 # pylint: disable=redefined-builtin,wrong-import-position
+# flake8: noqa=E402
 import os
 import sys
 
