@@ -31,7 +31,7 @@ from .exceptions import (
 
 
 # Metadata
-__version__ = "3.0.0-alpha.2"
+__version__ = "3.0.0-alpha.3"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -224,7 +224,34 @@ class Clappform:
         )
 
     def create(self, resource, item=None):
-        # Custom behavior when arguments are specific types.
+        """Crete a resource.
+
+        :param resource: Any object of :class:`clappform.dataclasses.ResourceType`
+        :param item: Optional only useful when resource argument is of type
+            :class:`clappform.dataclasses.Collection`.
+        :type item: dict
+
+        Usage::
+
+            >>> from clappform import Clappform
+            >>> import clappform.dataclasses as r
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!"
+            ... )
+            >>> new_app = r.App(
+            ...     id="uspresidents",
+            ...     name="US Presidents",
+            ...     description="US Presidents Dashboard",
+            ...     settings={}
+            ... )
+            >>> c.create(new_app)
+            App(collections=0, default_page='', description='US Presidents Dashboard...
+
+        :returns: Newly created resource
+        """
+        # Custom behavior when arguments are of a specific type.
         if isinstance(resource, dc.Collection) and isinstance(item, dict):
             document = self._private_request(
                 "POST", resource.create_item_path(), json={"data": item}
@@ -243,6 +270,29 @@ class Clappform:
         return type(resource)(**document["data"])
 
     def update(self, resource, item=None):
+        """Update a resource.
+
+        :param resource: Any object of :class:`clappform.dataclasses.ResourceType`
+        :param item: Optional only useful when resource argument is of type
+            :class:`clappform.dataclasses.Collection`.
+        :type item: dict
+
+        Usage::
+
+            >>> from clappform import Clappform
+            >>> import clappform.dataclasses as r
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!"
+            ... )
+            >>> app = c.get(r.App(id="uspresidents"))
+            >>> app.description = "Dashboard of US Presidents"
+            >>> c.update(app)
+            App(collections=0, default_page='', description='Dashboard of US Preside...
+
+        :returns: Updated resource
+        """
         # Custom behavior when arguments are specific types.
         if isinstance(resource, dc.Collection) and isinstance(item, dict):
             item_id, item = self._seperate_id_from_item(item)
@@ -267,6 +317,24 @@ class Clappform:
         return type(resource)(**document["data"])
 
     def delete(self, resource, item=None):
+        """Delete a resource.
+
+        Usage::
+
+            >>> from clappform import Clappform
+            >>> import clappform.dataclasses as r
+            >>> c = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!",
+            ... )
+            >>> app = c.get(r.App(id="uspresidents"))
+            >>> c.delete(app)
+            ApiResponse(code=200, message='Successfully deleted app with ID: uspresi...
+
+        :returns: Confirmation of deletion.
+        :rtype: :class:`clappform.dataclasses.ApiResponse`
+        """
         # Custom behavior when arguments are specific types.
         if isinstance(resource, dc.Collection) and item is not None:
             oids: list[str] = None
@@ -421,7 +489,7 @@ class Clappform:
         self,
         df: DataFrame,
         collection: dc.Collection,
-        chunk_size: int = 100,
+        size: int = 100,
         interval_timeout: int = 0,
     ):
         """Write Pandas DataFrame to collection.
@@ -430,7 +498,7 @@ class Clappform:
         :type df: :class:`pandas.DataFrame`
         :param collection: Collection to hold DataFrame records
         :type collection: :class:`clappform.dataclasses.Collection`
-        :param int chunk_size: defaults to: ``100``
+        :param int size: Size of each chunk. Defaults to: ``100``
         :param interval_timeout: Optional time to sleep per request, defaults to:
             ``0.0``.
         :type interval_timeout: int
@@ -443,12 +511,11 @@ class Clappform:
         df = df.replace([np.nan, np.inf, -np.inf], None)
 
         # Split DataFrame up into chunks.
-        list_df = [df[i : i + chunk_size] for i in range(0, df.shape[0], chunk_size)]
-        for i in range(len(list_df)):
+        for chunk in [df[i : i + size] for i in range(0, df.shape[0], size)]:
             # `TemporaryFile` And `force_ascii=False` force the chunck to be `UTF-8`
             # encoded.
             with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as fd:
-                df.to_json(fd, orient="records", force_ascii=False)
+                chunk.to_json(fd, orient="records", force_ascii=False)
                 fd.seek(0)  # Reset pointer to begin of file for reading.
                 self._private_request(
                     "POST", collection.dataframe_path(), data=fd.read()

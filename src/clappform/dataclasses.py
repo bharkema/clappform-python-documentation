@@ -185,10 +185,10 @@ class App(ResourceType):
         ...     settings={}
         ... )
         >>> c.create(new_app)
-        App(collections=0, default_page='', description='US Presidents Dashboard', groups=0, id='uspresidents', name='US Presidents', settings={})
+        App(collections=0, default_page='', description='US Presidents Dashboard', g...
         >>> app = c.get(r.App(id="uspresidents"))
         >>> c.delete(app)
-        ApiResponse(code=200, message='Successfully deleted app with ID: uspresidents.', response_id='647de8f97416cc352603a431')
+        ApiResponse(code=200, message='Successfully deleted app with ID: uspresident...
         >>> for app in c.get(r.App()):
         ...     print(app.name)
     """
@@ -304,10 +304,10 @@ class Collection(ResourceType):
         ...     description="All presidents of the United Stated of America"
         ... )
         >>> c.create(new_collection)
-        Collection(app='uspresidents', slug='presidents', database='MONGO', name='United States Presidents', items=None, description='All presidents of the United Stated of America', is_encrypted=False, is_locked=False, is_logged=False, queries=None, sources=[], id=473)
+        Collection(app='uspresidents', slug='presidents', database='MONGO', name='Un...
         >>> collection = c.get(r.Collection(app="uspresidents", slug="presidents"))
         >>> c.delete(collection)
-        ApiResponse(code=200, message='Successfully deleted collection with slug: presidents.', response_id='647df8477416cc352603a447')
+        ApiResponse(code=200, message='Successfully deleted collection with slug: pr...
         >>> for collection in c.get(r.Collection()):
         ...     print(f"{collection.app}: {collection.slug}")
     """
@@ -431,7 +431,7 @@ class Collection(ResourceType):
     def one_item_path(self, item: str) -> str:
         """Return the route used for creating and deleting items.
 
-        :returns: Item HTTP resource path
+        :returns: Item HTTP path
         :rtype: str
         """
         if self.app is None or self.slug is None:
@@ -441,6 +441,11 @@ class Collection(ResourceType):
         return f"/item/{self.app}/{self.slug}/{item}"
 
     def create_item_path(self) -> str:
+        """Return the route used to create an item.
+
+        :returns: Item HTTP path
+        :rtype: str
+        """
         if self.app is None or self.slug is None:
             raise TypeError(f"both 'app' and 'slug' attributes can not be {None}")
         return f"/item/{self.app}/{self.slug}"
@@ -448,7 +453,7 @@ class Collection(ResourceType):
     def dataframe_path(self) -> str:
         """Return the route used to retreive the Dataframe.
 
-        :returns: Collection's Dataframe HTTP resource path
+        :returns: Collection's Dataframe HTTP path
         :rtype: str
         """
         if self.app is None or self.slug is None:
@@ -478,20 +483,25 @@ class Query(ResourceType):
         ...     slug="f1cb2ba5-64a7-4056-99d5-7d639557970f",
         ... )
         >>> c.create(new_collection)
-        Query(app='uspresidets', collection='presidents', data_source='app', export=False, id=3601, name='all presidents', query=[], slug='f1cb2ba5-64a7-4056-99d5-7d639557970f', source_query='', modules=[], primary=True, settings={})
+        Query(app='uspresidets', collection='presidents', data_source='app', export=...
         >>> query = c.get(r.Query(slug="f1cb2ba5-64a7-4056-99d5-7d639557970f"))
         >>> c.delete(query)
-        ApiResponse(code=200, message='Successfully deleted query with slug: f1cb2ba5-64a7-4056-99d5-7d639557970f.', response_id='')
+        ApiResponse(code=200, message='Successfully deleted query with slug: f1cb2ba...
         >>> for query in c.get(r.Query()):
         ...     print(f"{query.app}/{query.collection}: {query.slug}")
     """
 
+    #: App id this query belong to. This can be of type
+    #: :class:`clappform.dataclasses.App` or :class:`str`.
     app: str = None
     _app: str = field(init=False, repr=False, default=None)
+    #: Collection slug this query refers to. This can be of type
+    #: :class:`clappform.dataclasses.Collection` or :class:`str`.
     collection: str = None
     _collection: str = field(init=False, repr=False, default=None)
     data_source: str = None
     export: bool = None
+    #: Numeric id used for internal identication
     id: int = None
     name: str = None
     query: list = None
@@ -503,6 +513,11 @@ class Query(ResourceType):
 
     @property
     def app(self) -> str:
+        """Return the app property.
+
+        :returns: app Property
+        :rtype: str
+        """
         return self._app
 
     @app.setter
@@ -517,6 +532,11 @@ class Query(ResourceType):
 
     @property
     def collection(self) -> str:
+        """Return the collection property.
+
+        :returns: collection Property
+        :rtype: str
+        """
         return self._collection
 
     @collection.setter
@@ -573,7 +593,29 @@ class Query(ResourceType):
 
 @dataclass
 class Actionflow(ResourceType):
-    """Actionflow dataclass."""
+    """Actionflow resource type.
+
+    Usage::
+
+        >>> from clappform import Clappform
+        >>> import clappform.dataclasses as r
+        >>> c = Clappform(
+        ...     "https://app.clappform.com",
+        ...     "j.doe@clappform.com",
+        ...     "S3cr3tP4ssw0rd!",
+        ... )
+        >>> new_actionflow = r.Actionflow(
+        ...     name="Periodic housekeeping",
+        ...     settings={},
+        ... )
+        >>> c.create(new_collection)
+        Actionflow(id=48, name='Periodic housekeeping', settings={}, cronjobs=None, ...
+        >>> actionflow = c.get(r.Actionflow(id=48))
+        >>> c.delete(actionflow)
+        ApiResponse(code=200, message='Deleted action flow.', response_id='648083113...v
+        >>> for af in c.get(r.Actionflow()):
+        ...     print(f"{af.id}: {af.name}")
+    """
 
     id: int = None
     name: str = None
@@ -631,31 +673,86 @@ class Questionnaire(ResourceType):
 
 @dataclass
 class User(ResourceType):
-    """User dataclass."""
+    """User resource type.
 
+    Usage::
+
+        >>> from clappform import Clappform
+        >>> import clappform.dataclasses as r
+        >>> c = Clappform(
+        ...     "https://app.clappform.com",
+        ...     "j.doe@clappform.com",
+        ...     "S3cr3tP4ssw0rd!",
+        ... )
+        >>> user = c.get(r.User(email="j.doe@clappform.com")
+        >>> new_user = r.User(
+        ...     email="g.washington@clappform.com",
+        ...     first_name="George",
+        ...     last_name="Washington",
+        ...     password="HavntGotWoodenTeeth",
+        ... )
+        >>> c.create(new_user)
+        User(email='g.washington@clappform.com', extra_information={}, first_name='G...
+        >>> query = c.get(r.Query(slug="f1cb2ba5-64a7-4056-99d5-7d639557970f"))
+        >>> c.delete(query)
+        ApiResponse(code=200, message='Successfully deactivated user, with email: g....
+        >>> for user in c.get(r.User()):
+        ...     print(f"{user.email}: {user.first_name} {user.last_name}")
+    """
+
+    #: Email address of the user.
     email: str = None
+    #: Dictionary object describing extra related information about the user.
     extra_information: dict = None
+    #: User's first name.
     first_name: str = None
+    #: User's last name.
     last_name: str = None
+    #: Whether user can authenticate or not.
     is_active: bool = None
+    #: Numeric id used for internal identifaction.
     id: int = None
+    #: User's phone number.
     phone: str = None
+    #: Dictionary object containing notifications, emails, sms or whatsapp messages.
+    #: ``extended=True``
     messages: dict = None
+    #: Unix timestamp of when the user was last online. ``extended=True``
     last_online: int = None
+    #: List of permissions this user has. ``extended=True``
     permissions: list[str] = None
+    #: ``extended=True``
     roles: list[dict] = None
+    #: Password of the user. Only used when creating a user.
+    password: str = field(init=True, repr=False, default=None)
+    #: Used by ``get`` to gauge whether to fetch fully expanded user object.
     extended: bool = field(init=True, repr=False, default=False)
 
     def one_or_all_path(self) -> str:
+        """Return the path to retreive this User.
+
+        :returns: User HTTP path
+        :rtype: str
+        """
         if self.email is None:
             return self.all_path()
         return self.one_path()
 
     def all_path(self) -> str:
+        """Return the path to retreive all Users.
+
+        :returns: User HTTP path
+        :rtype: str
+        """
         extended = self.bool_to_lower(bool(self.extended))
         return f"/users?extended={extended}"
 
     def one_path(self) -> str:
+        """Return the path to retreive this User.
+
+        :returns: User HTTP path
+        :rtype: str
+        """
         extended = self.bool_to_lower(bool(self.extended))
         if not isinstance(self.email, str):
             raise TypeError(
@@ -664,4 +761,9 @@ class User(ResourceType):
         return f"/user/{self.email}?extended={extended}"
 
     def create_path(self) -> str:
+        """Return the path to create a Collection.
+
+        :returns: Collection HTTP path
+        :rtype: str
+        """
         return "/user"
