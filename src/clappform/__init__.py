@@ -31,7 +31,7 @@ from .exceptions import (
 
 
 # Metadata
-__version__ = "3.0.0-alpha.3"
+__version__ = "3.0.0-alpha.4"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -437,15 +437,18 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
+            >>> import clappform.dataclasses as r
+            >>> import pandas as pd
             >>> c = Clappform(
             ...     "https://app.clappform.com",
             ...     "j.doe@clappform.com",
             ...     "S3cr3tP4ssw0rd!"
             ... )
-            >>> query = c.get_query("foo")
-            >>> it = c.read_dataframe(query)
-            >>> for i in it:
-            ...     print(i)
+            >>> query = c.get(r.Query(slug="foo")
+            >>> list_df = []
+            >>> for df in c.read_dataframe(query):
+            ...     list_df.append(df)
+            >>> master_df = pd.concat(list_df)
 
         :returns: Generator to read dataframe
         :rtype: :class:`generator`
