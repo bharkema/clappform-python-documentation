@@ -31,7 +31,7 @@ from .exceptions import (
 
 
 # Metadata
-__version__ = "3.0.0-alpha.4"
+__version__ = "3.0.0-alpha.5"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -521,7 +521,10 @@ class Clappform:
                 chunk.to_json(fd, orient="records", force_ascii=False)
                 fd.seek(0)  # Reset pointer to begin of file for reading.
                 self._private_request(
-                    "POST", collection.dataframe_path(), data=fd.read()
+                    "POST",
+                    collection.dataframe_path(),
+                    headers={"Content-Type": "application/json"},
+                    data=fd.read().encode("utf-8"),
                 )
             time.sleep(interval_timeout)
 
