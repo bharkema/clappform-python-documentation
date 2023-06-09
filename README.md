@@ -3,8 +3,9 @@
 
 ```python
 >>> from clappform import Clappform
+>>> import clappform.dataclasses as r
 >>> c = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
->>> apps = c.get_apps()
+>>> apps = c.get(r.App())
 >>> for app in apps:
 ...     print(app.name)
 'Clappform'
