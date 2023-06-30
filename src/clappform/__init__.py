@@ -31,7 +31,7 @@ from .exceptions import (
 
 
 # Metadata
-__version__ = "3.0.0"
+__version__ = "3.0.1"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -396,10 +396,10 @@ class Clappform:
         )
         v.validate(options)
 
-        path = "/dataframe/aggregate"
+        path = "/dataframe/read_data?extended=true"
         params = {
             "method": "POST",
-            "path": f"{path}?extended=true",
+            "path": path,
             "json": v.document,
         }
 
@@ -413,9 +413,11 @@ class Clappform:
         if pages_to_get == 1:
             yield DataFrame(document["data"])
         else:
-            for _ in range(pages_to_get):
+            for i in range(pages_to_get):
                 yield DataFrame(document["data"])
-                params["path"] = f"{path}?next_page={document['next_page']}"
+                if i >= pages_to_get - 1:
+                    break
+                params["path"] = f"{path}&next_page={document['next_page']}"
                 time.sleep(
                     interval_timeout
                 )  # Prevent Denial Of Service (dos) flagging.
@@ -453,10 +455,10 @@ class Clappform:
         :returns: Generator to read dataframe
         :rtype: :class:`generator`
         """
-        path = "/dataframe/read_data"
+        path = "/dataframe/read_data?extended=true"
         params = {
             "method": "POST",
-            "path": f"{path}?extended=true",
+            "path": path,
             "json": {"limit": limit},
         }
         if isinstance(query, dc.Query):
@@ -480,9 +482,11 @@ class Clappform:
         if pages_to_get == 1:
             yield DataFrame(document["data"])
         else:
-            for _ in range(pages_to_get):
+            for i in range(pages_to_get):
                 yield DataFrame(document["data"])
-                params["path"] = f"{path}?next_page={document['next_page']}"
+                params["path"] = f"{path}&next_page={document['next_page']}"
+                if i >= pages_to_get - 1:
+                    break
                 time.sleep(
                     interval_timeout
                 )  # Prevent Denial Of Service (dos) flagging.
