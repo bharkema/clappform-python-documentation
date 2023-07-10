@@ -31,7 +31,7 @@ from .exceptions import (
 
 
 # Metadata
-__version__ = "3.0.1"
+__version__ = "3.0.2"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -345,7 +345,7 @@ class Clappform:
                 oids = [self._seperate_id_from_item(item)[0]]
             if isinstance(oids, list):
                 document = self._private_request(
-                    "DELETE", resource.reate_item_path(), json={"oids": oids}
+                    "DELETE", resource.create_item_path(), json={"oids": oids}
                 )
                 return dc.ApiResponse(**document)
             t = type(item)
