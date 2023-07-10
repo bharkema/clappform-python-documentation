@@ -9,9 +9,11 @@ __requires__ = ["requests==2.28.1", "Cerberus==1.3.4", "pandas==1.5.2"]
 # Python Standard Library modules
 from urllib.parse import urlparse
 from dataclasses import asdict
+from concurrent import futures
 import tempfile
 import math
 import time
+import os
 
 # PyPi modules
 from requests.adapters import HTTPAdapter
@@ -31,7 +33,7 @@ from .exceptions import (
 
 
 # Metadata
-__version__ = "3.0.2"
+__version__ = "3.1.0"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -93,7 +95,10 @@ class Clappform:
         #: Session for all HTTP requests.
         self.session: r.sessions.Session = r.Session()
         self.session.headers.update({"User-Agent": self._default_user_agent()})
-        self.session.mount(self._base_url, HTTPAdapter(max_retries=3))
+        self.session.mount(
+            self._base_url,
+            HTTPAdapter(max_retries=3, pool_maxsize=min(32, os.cpu_count() + 4)),
+        )
 
         #: Username to use in the :meth:`auth <auth>`
         self.username: str = username
@@ -356,10 +361,16 @@ class Clappform:
         document = self._private_request("DELETE", resource.one_path())
         return dc.ApiResponse(**document)
 
-    def aggregate_dataframe(self, options: dict, interval_timeout: int = 0):
+    def aggregate_dataframe(
+        self, options: dict, interval_timeout: int = 0, max_workers=None
+    ):
         """Aggregate a dataframe
 
         :param dict options: Options for dataframe aggregation.
+        :param interval_timeout: Optional time to sleep per request, defaults to:
+            ``0.0``.
+        :type interval_timeout: int
+        :param int max_workers: Optional number of workers to use in thread pool.
 
         :returns: Generator to read dataframe
         :rtype: :class:`generator`
@@ -397,13 +408,9 @@ class Clappform:
         v.validate(options)
 
         path = "/dataframe/read_data?extended=true"
-        params = {
-            "method": "POST",
-            "path": path,
-            "json": v.document,
-        }
+        payload = v.document
 
-        document = self._private_request(**params)
+        document = self._private_request("POST", path, json=payload)
         if "total" not in document:
             raise PaginationKeyError(missing_key="total", data=document)
         if document["total"] == 0:
@@ -412,18 +419,29 @@ class Clappform:
         pages_to_get = math.ceil(document["total"] / options["limit"])
         if pages_to_get == 1:
             yield DataFrame(document["data"])
+        elif isinstance(document["next_page"], int):
+            _, *pages = [x * options["limit"] for x in range(pages_to_get)]
+            with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                for result in executor.map(
+                    lambda x: self._private_request(
+                        "POST", f"{path}&next_page={x}", json=payload
+                    ),
+                    pages,
+                ):
+                    yield DataFrame(result["data"])
         else:
             for i in range(pages_to_get):
                 yield DataFrame(document["data"])
                 if i >= pages_to_get - 1:
                     break
-                params["path"] = f"{path}&next_page={document['next_page']}"
-                time.sleep(
-                    interval_timeout
-                )  # Prevent Denial Of Service (dos) flagging.
-                document = self._private_request(**params)
+                time.sleep(interval_timeout)
+                document = self._private_request(
+                    "POST", f"{path}&next_page={document['next_page']}", json=payload
+                )
 
-    def read_dataframe(self, query, limit: int = 100, interval_timeout: int = 0):
+    def read_dataframe(
+        self, query, limit: int = 100, interval_timeout: int = 0, max_workers=None
+    ):
         """Read a dataframe.
 
         :param query: Query to for retreiving data. When Query is of type
@@ -435,6 +453,7 @@ class Clappform:
         :param interval_timeout: Optional time to sleep per request, defaults to:
             ``0.0``.
         :type interval_timeout: int
+        :param int max_workers: Optional number of workers to use in thread pool.
 
         Usage::
 
@@ -456,23 +475,20 @@ class Clappform:
         :rtype: :class:`generator`
         """
         path = "/dataframe/read_data?extended=true"
-        params = {
-            "method": "POST",
-            "path": path,
-            "json": {"limit": limit},
-        }
+        payload = {"limit": limit}
+
         if isinstance(query, dc.Query):
-            params["json"]["query"] = query.slug
+            payload["query"] = query.slug
         elif isinstance(query, dc.Collection):
-            params["json"]["app"] = query.app
-            params["json"]["collection"] = query.slug
+            payload["app"] = query.app
+            payload["collection"] = query.slug
         else:
             t = type(query)
             raise TypeError(
                 f"query arg must be of type {dc.Query} or {dc.Collection}, got {t}"
             )
 
-        document = self._private_request(**params)
+        document = self._private_request("POST", path, json=payload)
         if "total" not in document:
             raise PaginationKeyError(missing_key="total", data=document)
         if document["total"] == 0:
@@ -481,16 +497,25 @@ class Clappform:
         pages_to_get = math.ceil(document["total"] / limit)
         if pages_to_get == 1:
             yield DataFrame(document["data"])
+        elif isinstance(document["next_page"], int):
+            _, *pages = [x * limit for x in range(pages_to_get)]
+            with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+                for result in executor.map(
+                    lambda x: self._private_request(
+                        "POST", f"{path}&next_page={x}", json=payload
+                    ),
+                    pages,
+                ):
+                    yield DataFrame(result["data"])
         else:
             for i in range(pages_to_get):
                 yield DataFrame(document["data"])
-                params["path"] = f"{path}&next_page={document['next_page']}"
                 if i >= pages_to_get - 1:
                     break
-                time.sleep(
-                    interval_timeout
-                )  # Prevent Denial Of Service (dos) flagging.
-                document = self._private_request(**params)
+                time.sleep(interval_timeout)
+                document = self._private_request(
+                    "POST", f"{path}&next_page={document['next_page']}", json=payload
+                )
 
     def write_dataframe(
         self,
