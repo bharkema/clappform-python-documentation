@@ -33,7 +33,7 @@ from .exceptions import (
 
 
 # Metadata
-__version__ = "3.1.0"
+__version__ = "4.0.0"
 __author__ = "Clappform B.V."
 __email__ = "info@clappform.com"
 __license__ = "MIT"
@@ -225,7 +225,7 @@ class Clappform:
         if isinstance(document["data"], dict):
             return type(resource)(**document["data"])
         raise TypeError(
-            "'data' key-value is not {list} or {dict}, got {type(document['data'])}"
+            f"'data' key-value is not {list} or {dict}, got {type(document['data'])}"
         )
 
     def create(self, resource, item=None):
@@ -361,15 +361,10 @@ class Clappform:
         document = self._private_request("DELETE", resource.one_path())
         return dc.ApiResponse(**document)
 
-    def aggregate_dataframe(
-        self, options: dict, interval_timeout: int = 0, max_workers=None
-    ):
+    def aggregate_dataframe(self, options: dict, max_workers=None):
         """Aggregate a dataframe
 
         :param dict options: Options for dataframe aggregation.
-        :param interval_timeout: Optional time to sleep per request, defaults to:
-            ``0.0``.
-        :type interval_timeout: int
         :param int max_workers: Optional number of workers to use in thread pool.
 
         :returns: Generator to read dataframe
@@ -415,33 +410,26 @@ class Clappform:
             raise PaginationKeyError(missing_key="total", data=document)
         if document["total"] == 0:
             raise PaginationTotalError(total=document["total"], data=document)
+        yield document["data"]
 
         pages_to_get = math.ceil(document["total"] / options["limit"])
         if pages_to_get == 1:
-            yield DataFrame(document["data"])
-        elif isinstance(document["next_page"], int):
-            _, *pages = [x * options["limit"] for x in range(pages_to_get)]
+            pass
+        else:
             with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                 for result in executor.map(
                     lambda x: self._private_request(
                         "POST", f"{path}&next_page={x}", json=payload
                     ),
-                    pages,
+                    range(
+                        options["limit"],
+                        pages_to_get * options["limit"],
+                        options["limit"],
+                    ),
                 ):
-                    yield DataFrame(result["data"])
-        else:
-            for i in range(pages_to_get):
-                yield DataFrame(document["data"])
-                if i >= pages_to_get - 1:
-                    break
-                time.sleep(interval_timeout)
-                document = self._private_request(
-                    "POST", f"{path}&next_page={document['next_page']}", json=payload
-                )
+                    yield result["data"]
 
-    def read_dataframe(
-        self, query, limit: int = 100, interval_timeout: int = 0, max_workers=None
-    ):
+    def read_dataframe(self, query, limit: int = 100, max_workers=None):
         """Read a dataframe.
 
         :param query: Query to for retreiving data. When Query is of type
@@ -450,9 +438,6 @@ class Clappform:
         :type query: :class:`clappform.dataclasses.Query` |
             :class:`clappform.dataclasses.Collection`
         :param int limit: Amount of records to retreive per request.
-        :param interval_timeout: Optional time to sleep per request, defaults to:
-            ``0.0``.
-        :type interval_timeout: int
         :param int max_workers: Optional number of workers to use in thread pool.
 
         Usage::
@@ -467,9 +452,8 @@ class Clappform:
             ... )
             >>> query = c.get(r.Query(slug="foo")
             >>> list_df = []
-            >>> for df in c.read_dataframe(query):
-            ...     list_df.append(df)
-            >>> master_df = pd.concat(list_df)
+            >>> for chunck in c.read_dataframe(query):
+            ...     list_df.extend(chunck)
 
         :returns: Generator to read dataframe
         :rtype: :class:`generator`
@@ -493,36 +477,27 @@ class Clappform:
             raise PaginationKeyError(missing_key="total", data=document)
         if document["total"] == 0:
             raise PaginationTotalError(total=document["total"], data=document)
+        yield document["data"]
 
         pages_to_get = math.ceil(document["total"] / limit)
         if pages_to_get == 1:
-            yield DataFrame(document["data"])
-        elif isinstance(document["next_page"], int):
-            _, *pages = [x * limit for x in range(pages_to_get)]
+            pass
+        else:
             with futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
                 for result in executor.map(
                     lambda x: self._private_request(
                         "POST", f"{path}&next_page={x}", json=payload
                     ),
-                    pages,
+                    range(limit, pages_to_get * limit, limit),
                 ):
-                    yield DataFrame(result["data"])
-        else:
-            for i in range(pages_to_get):
-                yield DataFrame(document["data"])
-                if i >= pages_to_get - 1:
-                    break
-                time.sleep(interval_timeout)
-                document = self._private_request(
-                    "POST", f"{path}&next_page={document['next_page']}", json=payload
-                )
+                    yield result["data"]
 
     def write_dataframe(
         self,
         df: DataFrame,
         collection: dc.Collection,
         size: int = 100,
-        interval_timeout: int = 0,
+        max_workers=None,
     ):
         """Write Pandas DataFrame to collection.
 
@@ -555,7 +530,6 @@ class Clappform:
                     headers={"Content-Type": "application/json"},
                     data=fd.read().encode("utf-8"),
                 )
-            time.sleep(interval_timeout)
 
     def empty_dataframe(self, collection) -> dc.ApiResponse:
         """Empty a dataframe.
