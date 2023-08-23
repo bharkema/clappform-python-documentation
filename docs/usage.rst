@@ -13,7 +13,7 @@ Installation
 Functions
 ---------
 
-.. automodule:: usage
+.. automodule:: clappform
    :members:
    :undoc-members:
    :show-inheritance:
