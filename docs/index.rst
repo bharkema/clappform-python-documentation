@@ -1,8 +1,3 @@
-.. clappform documentation master file, created by
-   sphinx-quickstart on Fri Nov 11 10:53:58 2022.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to Clappform's API Wrapper
 ==================================
 **Clappform** allows one to easily connect and interact with a Clappform B.V. API. There is no need to manually program HTTP requests to authenticate and consume the API. Many resources of the API are able to be created, read, updated and deleted. To start using **Clappform** with logging::
@@ -28,6 +23,16 @@ Quick start
 Usage
 ------
 Check out the :doc:`usage` section for further information.
+
+
+Contents
+--------
+
+.. toctree::
+
+   usage
+
+
 
 
 .. Indices and tables

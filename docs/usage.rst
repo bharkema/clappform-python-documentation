@@ -9,10 +9,11 @@ Installation
 
     $ pip install clappform
 
+
 Functions
 ---------
 
-.. automodule:: clappform
+.. automodule:: usage
    :members:
    :undoc-members:
    :show-inheritance:
