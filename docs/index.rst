@@ -31,6 +31,8 @@ Contents
 .. toctree::
 
    usage
+   dataclasses
+   exceptions
 
 
 
