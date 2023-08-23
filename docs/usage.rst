@@ -15,5 +15,5 @@ Functions
 
 .. automodule:: clappform
    :members:
-   :undoc-members:
+   :no-undoc-members:
    :show-inheritance:
