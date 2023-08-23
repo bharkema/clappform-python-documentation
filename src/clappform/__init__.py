@@ -92,7 +92,7 @@ class Clappform:
     ):
         self._base_url: str = f"{base_url}/api"
 
-        #: Session for all HTTP requests.
+        # Session for all HTTP requests.
         self.session: r.sessions.Session = r.Session()
         self.session.headers.update({"User-Agent": self._default_user_agent()})
         self.session.mount(
@@ -100,13 +100,13 @@ class Clappform:
             HTTPAdapter(max_retries=3, pool_maxsize=min(32, os.cpu_count() + 4)),
         )
 
-        #: Username to use in the :meth:`auth <auth>`
+        # Username to use in the :meth:`auth <auth>`
         self.username: str = username
 
-        #: Password to use in the :meth:`auth <auth>`
+        # Password to use in the :meth:`auth <auth>`
         self.password: str = password
 
-        #: Default request keyword arguments.
+        # Default request keyword arguments.
         self.request_kwargs: dict = {
             "timeout": 1,
             "allow_redirects": True,
