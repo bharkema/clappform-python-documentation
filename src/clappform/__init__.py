@@ -144,7 +144,6 @@ class Clappform:
         return self._request(method, path, **kwargs)
 
     def auth(self) -> None:
-        """Sends an authentication request. Gets called whenever authentication is required."""
         document = self._request(
             "POST",
             "/auth",
@@ -156,7 +155,6 @@ class Clappform:
         )
 
     def verify_auth(self) -> dc.ApiResponse:
-        """Verify against the API if the authentication is valid."""
         document = self._private_request("POST", "/auth/verify")
         return dc.ApiResponse(**document)
 
@@ -547,14 +545,6 @@ class Clappform:
         return actions
 
     def export_app(self, app) -> dict:
-        """Export an app.
-
-        :param app: App to export
-        :type app: :class:`str` | :class:`clappform.dataclasses.App`
-
-        :returns: Exported App
-        :rtype: dict
-        """
         app_type = type(app)
         if not app_type == dc.App:
             raise TypeError("app argument is not of type {dc.App}, got {app_type}")
@@ -616,13 +606,6 @@ class Clappform:
         }
 
     def import_app(self, app: dict, data_export: bool = False) -> dc.ApiResponse:
-        """Import an app.
-
-        :param dict app: Exported app object.
-
-        :returns: Api Response Object
-        :rtype: clappform.dataclasses.ApiResponse
-        """
         config = app.pop("config")
         if not config["deployable"]:
             # pylint: disable=W0719
@@ -637,14 +620,6 @@ class Clappform:
         return dc.ApiResponse(**document)
 
     def current_user(self, extended: bool = False) -> dc.User:
-        """Get :class:`clappform.dataclasses.User` object of the current user.
-
-        :param bool extended: Optional retreive fully expanded user, defaults
-            to ``false``.
-
-        :returns: User object.
-        :rtype: clappform.dataclasses.User
-        """
         extended = dc.ResourceType.bool_to_lower(extended)
         document = self._private_request("GET", f"/user/me?extended={extended}")
         return dc.User(**document["data"])
