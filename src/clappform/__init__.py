@@ -238,30 +238,36 @@ class Clappform:
         )
 
     def create(self, resource, item=None):
-        """Crete a resource.
+        """Create a resource.
 
         :param resource: Any object of :class:`clappform.dataclasses.ResourceType`
         :param item: Optional only useful when resource argument is of type
             :class:`clappform.dataclasses.Collection`.
         :type item: dict
 
+        By utilizing the :meth:`create` function, it is possible to create new resources on a live Clappform environment, after which it is possible to use and control the newly created resources through Python code. Through this method it is also possible to insert a new record within a given collection.
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as r
-            >>> c = Clappform(
-            ...     "https://app.clappform.com",
-            ...     "j.doe@clappform.com",
-            ...     "S3cr3tP4ssw0rd!"
-            ... )
-            >>> new_app = r.App(
+            >>> import clappform.dataclasses as c_dataclasses
+            ...
+            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            ...
+            ... # Create new app dataclass
+            >>> new_app = c_dataclasses.App(
             ...     id="uspresidents",
             ...     name="US Presidents",
             ...     description="US Presidents Dashboard",
             ...     settings={}
             ... )
-            >>> c.create(new_app)
-            App(collections=0, default_page='', description='US Presidents Dashboard...
+            ...
+            ... # Create the new app on the environment
+            >>> c_auth.create(new_app)
+            ... App(collections=0, default_page='', description='US Presidents Dashboard...
+            ...
+            ... # Insert a new data record within collection
+            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
+            >>> c_auth.create(specific_collection, item={"foo": "bar"})
 
         :returns: Newly created resource
         """
@@ -291,19 +297,28 @@ class Clappform:
             :class:`clappform.dataclasses.Collection`.
         :type item: dict
 
+        This technique enables the user to revise any of the online resources and update a specific data record within a given collection. 
+        
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as r
-            >>> c = Clappform(
-            ...     "https://app.clappform.com",
-            ...     "j.doe@clappform.com",
-            ...     "S3cr3tP4ssw0rd!"
-            ... )
-            >>> app = c.get(r.App(id="uspresidents"))
+            >>> import clappform.dataclasses as c_dataclasses
+            ...
+            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            ...
+            ... # Retrieve the application
+            >>> app = c_auth.get(c_dataclasses.App(id="uspresidents"))
+            ...
+            ... # Update a setting of an application
             >>> app.description = "Dashboard of US Presidents"
-            >>> c.update(app)
-            App(collections=0, default_page='', description='Dashboard of US Preside...
+            ...
+            ... # Update the application on the live environment
+            >>> c_auth.update(app)
+            ... App(collections=0, default_page='', description='Dashboard of US Preside...
+            ...
+            ... # Update a data record
+            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
+            >>> c_auth.update(specific_collection, item={"_id": "64dc840532da38065900bde1", "foo": "bla"})
 
         :returns: Updated resource
         """
