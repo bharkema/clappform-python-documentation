@@ -590,8 +590,10 @@ class Clappform:
             ...
             >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
             ...
+            ... # Retreive the collection
             >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
             ... 
+            ... # Start writing to the online collection
             >>> c_auth.write_dataframe(df, specific_collection, 100)
 
         """
@@ -619,7 +621,7 @@ class Clappform:
     def empty_dataframe(self, collection) -> dc.ApiResponse:
         """Empty a dataframe.
 
-        :param collection: Collection to append data to.
+        :param collection: Collection which will be emptied
         :type collection: clappform.dataclasses.Collection
 
         Usage::
@@ -629,8 +631,10 @@ class Clappform:
             ...
             >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
             ...
+            ... # Retreive the collection
             >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
             ... 
+            ... # Empty the selected collection
             >>> c_auth.empty_dataframe(specific_collection)
             
         :returns: API response object
