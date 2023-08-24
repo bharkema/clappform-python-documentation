@@ -404,6 +404,30 @@ class Clappform:
         :param dict options: Options for dataframe aggregation.
         :param int max_workers: Optional number of workers to use in thread pool.
 
+        By utilizing the :meth:`aggregate_dataframe` function, it is possible to retrieve records from an online Clappform environment and use the data locally / within Python code. It is essential to keep in mind that this will be a locally stored duplicate and not the original online data.
+        
+        Usage::
+
+            >>> from clappform import Clappform
+            ...
+            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            ...
+            ... # Create pipline
+            >>> options = {
+            ...     "app": "clappform",
+            ...     "collection": "default",
+            ...     "pipeline": [],
+            ...     "limit": 100
+            ... }
+            ...
+            ... # Aggregate data
+            >>> data = [i for x in c_auth.aggregate_dataframe(options) for i in x]
+            ...
+            ... # Optional: Transform data to Pandas DataFrame
+            >>> import pandas as pd
+            ...
+            >>> df = pd.DataFrame(data)
+
         :returns: Generator to read dataframe
         :rtype: :class:`generator`
         """
@@ -477,20 +501,27 @@ class Clappform:
         :param int limit: Amount of records to retreive per request.
         :param int max_workers: Optional number of workers to use in thread pool.
 
+         By utilizing the :meth:`aggregate_dataframe` function, it is possible to
+
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as r
-            >>> import pandas as pd
-            >>> c = Clappform(
-            ...     "https://app.clappform.com",
-            ...     "j.doe@clappform.com",
-            ...     "S3cr3tP4ssw0rd!"
-            ... )
-            >>> query = c.get(r.Query(slug="foo")
+            >>> import clappform.dataclasses as c_dataclasses
+            ...
+            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            ...
+            ... # Retrieve data through query
+            >>> query = c_auth.get(c_dataclasses.Query(slug="foo"))
             >>> list_df = []
-            >>> for chunck in c.read_dataframe(query):
-            ...     list_df.extend(chunck)
+            >>> for chunck in c_auth.read_dataframe(query):
+            >>>     list_df.extend(chunck)
+            ...
+            ... # Retrieve through collection
+            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
+            ...
+            >>> list_df = []
+            >>> for chunck in c_auth.read_dataframe(specific_collection, 100):
+            >>>     list_df.extend(chunck)
 
         :returns: Generator to read dataframe
         :rtype: :class:`generator`
@@ -546,6 +577,23 @@ class Clappform:
         :param interval_timeout: Optional time to sleep per request, defaults to:
             ``0.0``.
         :type interval_timeout: int
+
+        By utilizing the :meth:`write_dataframe` function, it is possible to append records to a collection
+
+        Usage::
+
+            >>> from clappform import Clappform
+            >>> import clappform.dataclasses as c_dataclasses
+            >>> import Pandas as pd
+            ...
+            >>> df = pd.DataFrame()
+            ...
+            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            ...
+            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
+            ... 
+            >>> c_auth.write_dataframe(df, specific_collection, 100)
+
         """
         # Transform DataFrame to be JSON serializable
         for col in df.columns:
@@ -574,6 +622,17 @@ class Clappform:
         :param collection: Collection to append data to.
         :type collection: clappform.dataclasses.Collection
 
+        Usage::
+
+            >>> from clappform import Clappform
+            >>> import clappform.dataclasses as c_dataclasses
+            ...
+            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            ...
+            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
+            ... 
+            >>> c_auth.empty_dataframe(specific_collection)
+            
         :returns: API response object
         :rtype: clappform.dataclasses.ApiResponse
         """
