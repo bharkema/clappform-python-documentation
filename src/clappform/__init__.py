@@ -147,9 +147,11 @@ class Clappform:
 
     def auth(self) -> None:
         """
-        By utilizing the :meth:`create` function, it is possible to 
+        By utilizing the :meth:`auth` function, it is possible to 
         authorize the user at the online Environment again. This 
         method is mostly user internaly
+
+        :meta private:
         """
         document = self._request(
             "POST",
