@@ -349,18 +349,30 @@ class Clappform:
     def delete(self, resource, item=None):
         """Delete a resource.
 
+        :param resource: Any object of :class:`clappform.dataclasses.ResourceType`
+        :param item: Optional only useful when resource argument is of type
+            :class:`clappform.dataclasses.Collection`.
+        :type item: dict
+
+        By utilizing the :meth:`delete` function, it is possible to delete resources from an online Clappform environment. The method also allows the deletion of a record from a specific Application and Collection.
+        
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as r
-            >>> c = Clappform(
-            ...     "https://app.clappform.com",
-            ...     "j.doe@clappform.com",
-            ...     "S3cr3tP4ssw0rd!",
-            ... )
-            >>> app = c.get(r.App(id="uspresidents"))
-            >>> c.delete(app)
-            ApiResponse(code=200, message='Successfully deleted app with ID: uspresi...
+            >>> import clappform.dataclasses as c_dataclasses
+            ...
+            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            ...
+            ... # Retrieve application
+            >>> app = c_auth.get(c_dataclasses.App(id="uspresidents"))
+            ...
+            ... # Delete application of online environment
+            >>> c_auth.delete(app)
+            ... ApiResponse(code=200, message='Successfully deleted app with ID: uspresi...
+            ...
+            ... # Delete specific data record
+            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
+            >>> c_auth.update(specific_collection, item={"_id": "64dc840532da38065900bde1"})
 
         :returns: Confirmation of deletion.
         :rtype: :class:`clappform.dataclasses.ApiResponse`
