@@ -53,9 +53,6 @@ class Clappform:
     Clappform API that require authentication :class:`Clappform <Clappform>` will do
     the authentication for you.
 
-    In the example below ``c.get(r.App())`` uses a route which requires authentication.
-    :class:`Clappform <Clappform>` does the authentication for you.
-
     Usage::
 
         >>> from clappform import Clappform
@@ -63,7 +60,7 @@ class Clappform:
         >>> c = Clappform(
         ...     "https://app.clappform.com",
         ...     "j.doe@clappform.com",
-        ...     "S3cr3tP4ssw0rd!",
+        ...     "S3cr3tP4ssw0rd!"
         ... )
         >>> apps = c.get(r.App())
         >>> for app in apps:
@@ -147,12 +144,7 @@ class Clappform:
         return self._request(method, path, **kwargs)
 
     def auth(self) -> None:
-        """Sends an authentication request. Gets called whenever authentication is
-        required.
-
-        The :attr:`_auth` attribute is set to a newly constructed
-        :class:`clappform.dataclasses.Auth` object.
-        """
+        """Sends an authentication request. Gets called whenever authentication is required."""
         document = self._request(
             "POST",
             "/auth",
@@ -164,11 +156,7 @@ class Clappform:
         )
 
     def verify_auth(self) -> dc.ApiResponse:
-        """Verify against the API if the authentication is valid.
-
-        :returns: API response object
-        :rtype: clappform.dataclasses.ApiResponse
-        """
+        """Verify against the API if the authentication is valid."""
         document = self._private_request("POST", "/auth/verify")
         return dc.ApiResponse(**document)
 

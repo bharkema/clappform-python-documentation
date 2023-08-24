@@ -7,17 +7,17 @@ Quick start
 
 .. code:: python
 
-   from clappform import Clappform
-   import clappform.dataclasses as c_dataclasses
-
-   # Get a environment token from the given environment
-   c_auth = Clappform("ENVIRONMENT_URL", "J.Doe@clappform.com", "SUPERSECRETPASSWORD")
-
-   # Get all applications
-   apps = c_auth.Get(c_dataclasses.App())
-
-   for app in apps:
-      print(app.name)
+   >>> from clappform import Clappform
+   >>> import clappform.dataclasses as c_dataclasses
+   ...
+   ... # Get a environment token from the given environment
+   >>> c_auth = Clappform("ENVIRONMENT_URL", "J.Doe@clappform.com", "SUPERSECRETPASSWORD")
+   ...
+   ... # Get all applications
+   >>> apps = c_auth.Get(c_dataclasses.App())
+   ...
+   >>> for app in apps:
+   >>>    print(app.name)
 
 
 Usage
