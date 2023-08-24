@@ -173,25 +173,38 @@ class Clappform:
         return (item_id, original)
 
     def get(self, resource, item=None):
-        """Get a one or list of resources.
+        """Get one or a list of resources.
 
         :param resource: Any object of :class:`clappform.dataclasses.ResourceType`
         :param item: Optional only useful when resource argument is of type
             :class:`clappform.dataclasses.Collection`.
         :type item: dict
 
+        It is possible to obtain API resources using the :meth:`get` method. By setting the id or slug within a dataclass definition, you can request a specific resource. If you do not set them, the system will return all resources of that type at once.
+
         Usage::
 
-            >>> from clappform import Clappform
-            >>> import clappform.dataclasses as r
-            >>> c = Clappform(
-            ...     "https://app.clappform.com",
-            ...     "j.doe@clappform.com",
-            ...     "S3cr3tP4ssw0rd!"
-            ... )
-            >>> collection = c.get(r.Collection(id="clappform", slug="us_presidents"))
-            >>> c.get(collection, item={"_id", "6475c76276ffd5e8da000b2c"})
-            {'_id': '6475c76276ffd5e8da000b2c', 'name': "George Washington"}
+            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            ...
+            ... # Application examples
+            ... # Specific application
+            >>> specific_app = c_auth.get(c_dataclasses.App(id="clappform"))
+            >>> print(specific_app)
+            App(collections=13, description='Default Clappform appl...
+            ... 
+            ... # Multiple applications
+            >>> all_apps = c_auth.get(c_dataclasses.App())
+            ... 
+            >>> for app in all_apps:
+            >>>     print(app)
+            App(collections=13, description='Default Clappform appl...
+            App(collections=12, description='Secondary default Clap...
+            ... 
+            ... # Collection examples
+            ... # Specific application and collection
+            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
+            >>> print(specific_collection)
+            Collection(app='clappform', slug='default', database='M...
 
         :returns: One or a list of resources
         """
