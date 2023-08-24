@@ -147,9 +147,8 @@ class Clappform:
 
     def auth(self) -> None:
         """
-        By utilizing the :meth:`auth` function, it is possible to 
-        authorize the user at the online Environment again. This 
-        method is mostly user internaly
+        Sends an authentication request. 
+        Gets called whenever authentication is required.
 
         :meta private:
         """
@@ -164,6 +163,10 @@ class Clappform:
         )
 
     def verify_auth(self) -> dc.ApiResponse:
+        """Verify against the API if the authentication is valid.
+
+        :meta private:
+        """
         document = self._private_request("POST", "/auth/verify")
         return dc.ApiResponse(**document)
 
@@ -696,6 +699,11 @@ class Clappform:
         return actions
 
     def export_app(self, app) -> dict:
+        """
+        Export an app.
+
+        :meta private:
+        """
         app_type = type(app)
         if not app_type == dc.App:
             raise TypeError("app argument is not of type {dc.App}, got {app_type}")
@@ -757,6 +765,11 @@ class Clappform:
         }
 
     def import_app(self, app: dict, data_export: bool = False) -> dc.ApiResponse:
+        """
+        Import an app.
+        
+        :meta private:
+        """
         config = app.pop("config")
         if not config["deployable"]:
             # pylint: disable=W0719
@@ -771,6 +784,11 @@ class Clappform:
         return dc.ApiResponse(**document)
 
     def current_user(self, extended: bool = False) -> dc.User:
+        """
+        Returns the active user
+        
+        :meta private:
+        """
         extended = dc.ResourceType.bool_to_lower(extended)
         document = self._private_request("GET", f"/user/me?extended={extended}")
         return dc.User(**document["data"])
