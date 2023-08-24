@@ -10,7 +10,7 @@ Quick start
    >>> from clappform import Clappform
    >>> import clappform.dataclasses as c_dataclasses
    ...
-   ... # Get a environment token from the given environment
+   ... # Authorize at an online environment
    >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
    ...
    ... # Get all applications

@@ -56,7 +56,7 @@ class Clappform:
     Usage::
 
         >>> from clappform import Clappform
-        >>> import clappform.dataclasses as c_dataclasses
+        >>> import clappform.dataclasses as cdc
         ...
         >>> c_auth = Clappform(
         ...     "https://app.clappform.com",
@@ -64,7 +64,7 @@ class Clappform:
         ...     "S3cr3tP4ssw0rd!"
         ... )
         ...
-        >>> apps = c_auth.get(c_dataclasses.App())
+        >>> apps = c_auth.get(cdc.App())
         >>> for app in apps:
         ...     print(app.name)
 
@@ -146,6 +146,11 @@ class Clappform:
         return self._request(method, path, **kwargs)
 
     def auth(self) -> None:
+        """
+        By utilizing the :meth:`create` function, it is possible to 
+        authorize the user at the online Environment again. This 
+        method is mostly user internaly
+        """
         document = self._request(
             "POST",
             "/auth",
@@ -182,39 +187,40 @@ class Clappform:
             :class:`clappform.dataclasses.Collection`.
         :type item: dict
 
-        It is possible to obtain API resources using the :meth:`get` method. By setting the id or slug within a dataclass definition, it is possible to request a specific resource. If these are not set, the system will return all resources of that type.
+        It is possible to obtain API resources using the :meth:`get` method. By setting
+        the id or slug within a dataclass definition, it is possible to request a
+        specific resource. If these are not set, the system will return all resources of
+        that type.
 
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as c_dataclasses
+            >>> import clappform.dataclasses as cdc
             ...
-            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c_auth = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!")
             ...
             ... # Application examples
             ... # Specific application
-            >>> specific_app = c_auth.get(c_dataclasses.App(id="clappform"))
+            >>> specific_app = c_auth.get(cdc.App(id="clappform"))
             >>> print(specific_app)
-            ... App(collections=13, description='Default Clappform appl...
-            ... 
+            ...
             ... # Multiple applications
-            >>> all_apps = c_auth.get(c_dataclasses.App())
-            ... 
+            >>> all_apps = c_auth.get(cdc.App())
+            ...
             >>> for app in all_apps:
             >>>     print(app)
-            ... App(collections=13, description='Default Clappform appl...
-            ... App(collections=12, description='Secondary default Clap...
-            ... 
+            ...
             ... # Collection examples
             ... # Specific collection from an application
-            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
-            >>> print(specific_collection)
-            ... Collection(app='clappform', slug='default', database='M...
+            >>> _coll = c_auth.get(cdc.Collection(app="clappform", slug="default"))
+            >>> print(_coll)
             ...
             ... # get item from specific app and collection
-            >>> specific_collection_item = c_auth.get(specific_collection, item={"_id": "64dc840532da38065900bde1"})
-            >>> print(specific_collection_item)
-            ... {'datakey_1': 40, 'datakey_2': '201', 'datakey_3': '201...
+            >>> _coll_item = c_auth.get(specific_collection, item={"_id": "{MONGO_ID}"})
+            >>> print(_coll_item)
 
         :returns: One or a list of resources
         """
@@ -245,17 +251,23 @@ class Clappform:
             :class:`clappform.dataclasses.Collection`.
         :type item: dict
 
-        By utilizing the :meth:`create` function, it is possible to create new resources on a live Clappform environment, after which it is possible to use and control the newly created resources through Python code. Through this method it is also possible to insert a new record within a given collection.
-        
+        By utilizing the :meth:`create` function, it is possible to create new 
+        resources on a live Clappform environment, after which it is possible to 
+        use and control the newly created resources through Python code. Through this 
+        method it is also possible to insert a new record within a given collection.
+
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as c_dataclasses
+            >>> import clappform.dataclasses as cdc
             ...
-            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c_auth = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!")
             ...
             ... # Create new app dataclass
-            >>> new_app = c_dataclasses.App(
+            >>> new_app = cdc.App(
             ...     id="uspresidents",
             ...     name="US Presidents",
             ...     description="US Presidents Dashboard",
@@ -264,11 +276,10 @@ class Clappform:
             ...
             ... # Create the new app on the environment
             >>> c_auth.create(new_app)
-            ... App(collections=0, default_page='', description='US Presidents Dashboard...
             ...
             ... # Insert a new data record within collection
-            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
-            >>> c_auth.create(specific_collection, item={"foo": "bar"})
+            >>> _coll = c_auth.get(cdc.Collection(app="clappform", slug="default"))
+            >>> c_auth.create(_coll, item={"foo": "bar"})
 
         :returns: Newly created resource
         """
@@ -298,28 +309,32 @@ class Clappform:
             :class:`clappform.dataclasses.Collection`.
         :type item: dict
 
-        By utilizing the :meth:`update` function, it is possible to revise any of the online resources and update a specific data record within a given collection. 
-        
+        By utilizing the :meth:`update` function, it is possible to revise any 
+        of the online resources and update a specific data record within a given 
+        collection.
+
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as c_dataclasses
+            >>> import clappform.dataclasses as cdc
             ...
-            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c_auth = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!")
             ...
             ... # Retrieve the application
-            >>> app = c_auth.get(c_dataclasses.App(id="uspresidents"))
+            >>> app = c_auth.get(cdc.App(id="uspresidents"))
             ...
             ... # Update a setting of an application
             >>> app.description = "Dashboard of US Presidents"
             ...
             ... # Update the application on the live environment
             >>> c_auth.update(app)
-            ... App(collections=0, default_page='', description='Dashboard of US Preside...
             ...
             ... # Update a data record
-            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
-            >>> c_auth.update(specific_collection, item={"_id": "64dc840532da38065900bde1", "foo": "bla"})
+            >>> _coll = c_auth.get(cdc.Collection(app="clappform", slug="default"))
+            >>> c_auth.update(_coll, item={"_id": "{MONGO_ID}", "foo": "bla"})
 
         :returns: Updated resource
         """
@@ -354,25 +369,29 @@ class Clappform:
             :class:`clappform.dataclasses.Collection`.
         :type item: dict
 
-        By utilizing the :meth:`delete` function, it is possible to delete resources from an online Clappform environment. The method also allows the deletion of a record from a specific Application and Collection.
-        
+        By utilizing the :meth:`delete` function, it is possible to delete resources
+        from an online Clappform environment. The method also allows the deletion of a
+        record from a specific Application and Collection.
+
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as c_dataclasses
+            >>> import clappform.dataclasses as cdc
             ...
-            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c_auth = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!")
             ...
             ... # Retrieve application
-            >>> app = c_auth.get(c_dataclasses.App(id="uspresidents"))
+            >>> app = c_auth.get(cdc.App(id="uspresidents"))
             ...
             ... # Delete application of online environment
             >>> c_auth.delete(app)
-            ... ApiResponse(code=200, message='Successfully deleted app with ID: uspresi...
             ...
             ... # Delete specific data record
-            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
-            >>> c_auth.update(specific_collection, item={"_id": "64dc840532da38065900bde1"})
+            >>> _coll = c_auth.get(cdc.Collection(app="clappform", slug="default"))
+            >>> c_auth.update(_coll, item={"_id": "{MONGO_ID}"})
 
         :returns: Confirmation of deletion.
         :rtype: :class:`clappform.dataclasses.ApiResponse`
@@ -404,13 +423,19 @@ class Clappform:
         :param dict options: Options for dataframe aggregation.
         :param int max_workers: Optional number of workers to use in thread pool.
 
-        By utilizing the :meth:`aggregate_dataframe` function, it is possible to retrieve records from an online Clappform environment and use the data locally / within Python code. It is essential to keep in mind that this will be a locally stored duplicate and not the original online data.
-        
+        By utilizing the :meth:`aggregate_dataframe` function, it is possible to
+        retrieve records from an online Clappform environment and use the data
+        locally / within Python code. It is essential to keep in mind that this will
+        be a locally stored duplicate and not the original online data.
+
         Usage::
 
             >>> from clappform import Clappform
             ...
-            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c_auth = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!")
             ...
             ... # Create pipline
             >>> options = {
@@ -506,21 +531,24 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as c_dataclasses
+            >>> import clappform.dataclasses as cdc
             ...
-            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c_auth = Clappform(
+            ...     "https://app.clappform.com", 
+            ...     "j.doe@clappform.com", 
+            ...     "S3cr3tP4ssw0rd!")
             ...
             ... # Retrieve data through query
-            >>> query = c_auth.get(c_dataclasses.Query(slug="foo"))
+            >>> query = c_auth.get(cdc.Query(slug="foo"))
             >>> list_df = []
             >>> for chunck in c_auth.read_dataframe(query):
             >>>     list_df.extend(chunck)
             ...
             ... # Retrieve through collection
-            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
+            >>> _coll = c_auth.get(cdc.Collection(app="clappform", slug="default"))
             ...
             >>> list_df = []
-            >>> for chunck in c_auth.read_dataframe(specific_collection, 100):
+            >>> for chunck in c_auth.read_dataframe(_coll, 100):
             >>>     list_df.extend(chunck)
 
         :returns: Generator to read dataframe
@@ -578,23 +606,27 @@ class Clappform:
             ``0.0``.
         :type interval_timeout: int
 
-        By utilizing the :meth:`write_dataframe` function, it is possible to append records to a collection
+        By utilizing the :meth:`write_dataframe` function, it is possible to append 
+        records to a collection
 
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as c_dataclasses
+            >>> import clappform.dataclasses as cdc
             >>> import Pandas as pd
             ...
             >>> df = pd.DataFrame()
             ...
-            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c_auth = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!")
             ...
             ... # Retreive the collection
-            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
-            ... 
+            >>> _coll = c_auth.get(cdc.Collection(app="clappform", slug="default"))
+            ...
             ... # Start writing to the online collection
-            >>> c_auth.write_dataframe(df, specific_collection, 100)
+            >>> c_auth.write_dataframe(df, _coll, 100)
 
         """
         # Transform DataFrame to be JSON serializable
@@ -627,16 +659,19 @@ class Clappform:
         Usage::
 
             >>> from clappform import Clappform
-            >>> import clappform.dataclasses as c_dataclasses
+            >>> import clappform.dataclasses as cdc
             ...
-            >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
+            >>> c_auth = Clappform(
+            ...     "https://app.clappform.com",
+            ...     "j.doe@clappform.com",
+            ...     "S3cr3tP4ssw0rd!")
             ...
             ... # Retreive the collection
-            >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
-            ... 
+            >>> _coll = c_auth.get(cdc.Collection(app="clappform", slug="default"))
+            ...
             ... # Empty the selected collection
-            >>> c_auth.empty_dataframe(specific_collection)
-            
+            >>> c_auth.empty_dataframe(_coll)
+
         :returns: API response object
         :rtype: clappform.dataclasses.ApiResponse
         """
