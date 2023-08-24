@@ -246,6 +246,7 @@ class Clappform:
         :type item: dict
 
         By utilizing the :meth:`create` function, it is possible to create new resources on a live Clappform environment, after which it is possible to use and control the newly created resources through Python code. Through this method it is also possible to insert a new record within a given collection.
+        
         Usage::
 
             >>> from clappform import Clappform
@@ -297,7 +298,7 @@ class Clappform:
             :class:`clappform.dataclasses.Collection`.
         :type item: dict
 
-        This technique enables the user to revise any of the online resources and update a specific data record within a given collection. 
+        By utilizing the :meth:`update` function, it is possible to revise any of the online resources and update a specific data record within a given collection. 
         
         Usage::
 
