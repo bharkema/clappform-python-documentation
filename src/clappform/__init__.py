@@ -180,7 +180,7 @@ class Clappform:
             :class:`clappform.dataclasses.Collection`.
         :type item: dict
 
-        It is possible to obtain API resources using the :meth:`get` method. By setting the id or slug within a dataclass definition, you can request a specific resource. If you do not set them, the system will return all resources of that type at once.
+        It is possible to obtain API resources using the :meth:`get` method. By setting the id or slug within a dataclass definition, it is possible to request a specific resource. If these are not set, the system will return all resources of that type.
 
         Usage::
 
@@ -201,10 +201,15 @@ class Clappform:
             ... App(collections=12, description='Secondary default Clap...
             ... 
             ... # Collection examples
-            ... # Specific application and collection
+            ... # Specific collection from an application
             >>> specific_collection = c_auth.get(c_dataclasses.Collection(app="clappform", slug="default"))
             >>> print(specific_collection)
             ... Collection(app='clappform', slug='default', database='M...
+            ...
+            ... # get item from specific app and collection
+            >>> specific_collection_item = c_auth.get(specific_collection, item={"_id": "64dc840532da38065900bde1"})
+            >>> print(specific_collection_item)
+            ... {'datakey_1': 40, 'datakey_2': '201', 'datakey_3': '201...
 
         :returns: One or a list of resources
         """

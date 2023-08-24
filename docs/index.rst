@@ -11,14 +11,15 @@ Quick start
    >>> import clappform.dataclasses as c_dataclasses
    ...
    ... # Get a environment token from the given environment
-   >>> c_auth = Clappform("ENVIRONMENT_URL", "J.Doe@clappform.com", "SUPERSECRETPASSWORD")
+   >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
    ...
    ... # Get all applications
    >>> apps = c_auth.Get(c_dataclasses.App())
    ...
    >>> for app in apps:
    >>>    print(app.name)
-
+   ...
+   >>> collection = c_auth.Get
 
 Usage
 ------
@@ -31,33 +32,6 @@ Contents
 .. toctree::
 
    usage
+   logging
    dataclasses
    exceptions
-
-
-
-
-.. Indices and tables
-.. ==================
-
-.. * :ref:`genindex`
-.. * :ref:`modindex`
-.. * :ref:`search`
-
-.. Developer interface
-.. ===================
-
-.. .. automodule:: clappform
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
-
-.. .. automodule:: clappform.dataclasses
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
-
-.. .. automodule:: clappform.exceptions
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
