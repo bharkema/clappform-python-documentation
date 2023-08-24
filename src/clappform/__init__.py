@@ -56,13 +56,15 @@ class Clappform:
     Usage::
 
         >>> from clappform import Clappform
-        >>> import clappform.dataclasses as r
-        >>> c = Clappform(
+        >>> import clappform.dataclasses as c_dataclasses
+        ...
+        >>> c_auth = Clappform(
         ...     "https://app.clappform.com",
         ...     "j.doe@clappform.com",
         ...     "S3cr3tP4ssw0rd!"
         ... )
-        >>> apps = c.get(r.App())
+        ...
+        >>> apps = c_auth.get(c_dataclasses.App())
         >>> for app in apps:
         ...     print(app.name)
 
@@ -184,6 +186,9 @@ class Clappform:
 
         Usage::
 
+            >>> from clappform import Clappform
+            >>> import clappform.dataclasses as c_dataclasses
+            ...
             >>> c_auth = Clappform("https://app.clappform.com", "j.doe@clappform.com", "S3cr3tP4ssw0rd!")
             ...
             ... # Application examples
